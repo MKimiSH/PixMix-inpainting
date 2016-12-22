@@ -1,12 +1,13 @@
+%yuzhang
+%输入:uint8灰度图像img
+%输出:标定的角点，矩阵中为1的地方是角点，为0的地方非角点
+
 %用例:
 %img=imread('building.jpg');
 %img = im2uint8(rgb2gray(img)); 
 %imshow(img);
 %corner_matrix = harris_old(img);
 %figure,imshow(mat2gray(corner_matrix));
-
-%输入:uint8灰度图像img
-%输出:标定的角点，矩阵中为1的地方是角点，为0的地方非角点
 %Harris角点检测对尺度敏感
 function [corner_matrix] = harris_old(img)
 

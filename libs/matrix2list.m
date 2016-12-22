@@ -1,3 +1,4 @@
+%yuzhang
 %输入:matrix,查询目标target_value
 %输出:list(n行2列,存储matrix中所有值为traget_value的点的坐标)
 function [list] = matrix2list(matrix,target_value)

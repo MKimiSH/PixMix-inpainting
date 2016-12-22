@@ -1,12 +1,13 @@
+%yuzhang
+%输入:uint8灰度图像img,n行2列矩阵candidate_list存储可能是角点的点的坐标,要求检测到的最少的角点数min_corner_num
+%输出:标定的角点坐标列表n行2列的corner_list
+
 %用例:
 %img=imread('building.jpg');
 %img = im2uint8(rgb2gray(img)); 
 %imshow(img);
 %corner_matrix = harris(img);
 %figure,imshow(mat2gray(corner_matrix));
-
-%输入:uint8灰度图像img
-%输出:标定的角点，矩阵中为1的地方是角点，为0的地方非角点
 %Harris角点检测对尺度敏感
 function [corner_list] = harris(img,candidate_list,min_corner_num)
     [m, n]=size(img);
