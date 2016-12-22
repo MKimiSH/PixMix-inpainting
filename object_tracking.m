@@ -1,6 +1,6 @@
-%使用前需要先addpath(genpath('libs'));
-%输入:uint8灰度图像last_frame,uint8灰度图像this_frame,二值矩阵last_frame_contour(1为contour,0为非contour)
-%输出:投影变换H,当前帧边界this_frame_contour
+%使用前需要先addpath(genpath('libs/tracking'));
+%输入:uint8灰度图像last_frame,uint8灰度图像this_frame,逻辑值this_frame是否是第一帧is_first_frame,上一帧的边界last_contour,需要维持的全局变量opticalFlow
+%输出:投影变换H,当前帧边界this_contour,需要维持的全局变量opticalFlow
 function [H,this_contour,opticalFlow] = object_tracking(last_frame,this_frame,is_first_frame,last_contour,opticalFlow)
     if is_first_frame == true
         opticalFlow = opticalFlowLK('NoiseThreshold',0.009);
