@@ -3,3 +3,4 @@ videos/*
 tyq/*
 *.png
 *.pdf
+*.mexw64
