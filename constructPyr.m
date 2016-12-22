@@ -24,6 +24,8 @@ pyM{L} = M;
 for l=L-1:-1:1
     pyM{l} = imresize(pyM{l+1}, 0.5);
     pyI{l} = imresize(pyI{l+1}, [size(pyM{l},1), size(pyM{l},2)] );
+    pyM{l} = imdilate(pyM{l}, strel('square',3));
+%     pyI{l} = maskImage(pyI{l}, pyM{l});
 end
 
 end

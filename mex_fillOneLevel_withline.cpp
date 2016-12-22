@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include <math.h>
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include "mex.h"
 #include <ctime>
 #include "matrix.h"
@@ -15,11 +16,35 @@
 //#define H(i,j,k, r,c,d) ((i)*(c)*(d)+(j)*(d)+(k))
 //#define H(i,j,k, r,c,d) ((i)*(d)+(j)*(r*d)+(k))
 #define H(i,j,k, r,c,d) ((i)+(j)*(r)+(k)*(r)*(c))
+#define sind(x) (sin(fmod((x),360) * M_PI / 180))
+#define cosd(x) (cos(fmod((x),360) * M_PI / 180))
+#define sq(x) ((x)*(x))
+
+typedef struct linestr {
+	int* point1;
+	int* point2;
+	float theta;
+	float rho;
+  linestr(){
+    point1 = NULL;
+    point2 = NULL;
+    theta = 0;
+    rho = 0;
+  }
+	linestr(int* p1, int* p2, float r, float t) :point1(p1), point2(p2), rho(r), theta(t) {}
+} line;
+line *lines;
+int nlines;
+void getLines(const mxArray*);
+void getParams(const mxArray*);
+
 // Function Declarations
-void fillOneLevel(int* initf, float* I, const bool* M, float* D, int level, int useline, int);
+void fillOneLevel(int* initf, float* I, const bool* M, float* D, int level, line* , int);
 
 class fij;
-void fillIwithF(); 
+void fillIwithF();
+double calcTotalCost(int, int, fij);
+double calcLineCost(int, int, fij);
 double calcSpatialCost(int i, int j, fij ff);
 double calcAppearanceCost(int i, int j, fij ff);
 inline fij  getFij(int i, int j);
@@ -30,18 +55,78 @@ inline bool isValid(fij ff);
 inline fij	randFij(int i, int j, double dist);
 
 
+
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
 
 // global variables
 int		*f;
 float	*im;
 bool	*mask;
-int		R=0, C=0;
+mxArray *linesptr;
+int		R = 0, C = 0;
+double alphaSp = .005, alphaAp = 0.5, alphaStr = 1 - alphaSp - alphaAp;
+double cs_imp = 1, cs_rad = 1;
+double kappa = MAX(R, C); // I have no idea how to set this thing...
 //#define GG(i,j)		((i)*(C)+(j))
 #define GG(i,j)		((i)+(j)*(R))
 //#define HH(i,j,k,d)	((i)*(C)*(d)+(j)*(d)+(k))
 //#define HH(i,j,k,d)	((i)*(d)+(j)*(R)*(d)+(k))
 #define HH(i,j,k,d)		((i) + (j)*(R) + (k)*R*C)
+
+void getLines(const mxArray* plines) {
+	nlines = mxGetNumberOfElements(plines);
+	lines = new line[nlines];
+	mxArray *tmp;
+	for (int i = 0; i < nlines; ++i) {
+		tmp = mxGetFieldByNumber(plines, i, 0); //point1
+		lines[i].point1 = (int*)mxGetData(tmp);
+		lines[i].point1[0]--;
+		lines[i].point1[1]--;
+
+		tmp = mxGetFieldByNumber(plines, i, 1); //point2
+		lines[i].point2 = (int*)mxGetData(tmp);
+		lines[i].point2[0]--;
+		lines[i].point2[1]--; // move origin to (0,0)
+
+		tmp = mxGetFieldByNumber(plines, i, 2); //theta
+		lines[i].theta = (float)mxGetScalar(tmp);
+
+		tmp = mxGetFieldByNumber(plines, i, 3); //rho
+		lines[i].rho = (float)mxGetScalar(tmp);
+	}
+}
+
+void getParams(const mxArray* pparams) {
+	mxArray *tmp;
+	tmp = mxGetField(pparams, 0, "alphaSp");
+	if (tmp) {
+		alphaSp = (double)mxGetScalar(tmp);
+	}
+	tmp = mxGetField(pparams, 0, "alphaAp");
+	if (tmp) {
+		alphaAp = (double)mxGetScalar(tmp);
+	}
+	alphaStr = 1 - alphaSp - alphaAp;
+	tmp = mxGetField(pparams, 0, "cs_imp");
+	if (tmp) {
+		cs_imp = (double)mxGetScalar(tmp);
+	}
+	tmp = mxGetField(pparams, 0, "cs_rad");
+	if (tmp) {
+		cs_rad = (double)mxGetScalar(tmp);
+	}
+	tmp = mxGetField(pparams, 0, "kappa");
+	if (tmp) {
+		kappa = (double)mxGetScalar(tmp);
+		if (kappa == 0){}
+			kappa = MAX(R, C);
+	}
+	else {
+		kappa = MAX(R, C);
+	}
+	printf("params: %lf, %lf, %lf, %lf, %lf\n", alphaSp, alphaAp, cs_imp, cs_rad, kappa);
+
+}
 
 class fij {
 private:
@@ -59,7 +144,7 @@ public:
 		data[0] = a;
 		data[1] = b;
 	}
-	~fij(){}
+	~fij() {}
 	int norm2() {
 		return data[0] * data[0] + data[1] * data[1];
 	}
@@ -88,14 +173,16 @@ public:
 		ret[1] = f1[1] - f2[1];
 		return ret;
 	}
+	friend int operator *(fij& f1, fij& f2) {
+		return f1[0] * f2[0] + f1[1] * f2[1];
+	}
 };
 
 
 
 // main procedure
-void fillOneLevel(int* initf, float* I, const bool* M, float* D, int level, int useline, int iternum) {
+void fillOneLevel(int* initf, float* I, const bool* M, float* D, int level, line* Lines, int iternum) {
 	printf("Entering fillOneLevel\n");
-	double alphaSp = .005, alphaAp = 1 - alphaSp;
 	double wrs = .5;
 	int rrs = MAX(R, C);
 	int i, j, k, r = R, c = C;
@@ -105,7 +192,7 @@ void fillOneLevel(int* initf, float* I, const bool* M, float* D, int level, int 
 
 	// propagation and random search
 	int numIter = iternum;
-	for(int it = 0; it<numIter; ++it) {
+	for (int it = 0; it<numIter; ++it) {
 		fillIwithF();
 
 		//printf("begin propagation and search.\n");
@@ -117,29 +204,32 @@ void fillOneLevel(int* initf, float* I, const bool* M, float* D, int level, int 
 			double drs, spcRS, apcRS, costRS;
 			for (i = 0; i < R; ++i) {
 				for (j = 0; j < C; ++j) {
-					if (isMask(i,j)) {
+					if (isMask(i, j)) {
 						// propagate forward
 						fijOld = getFij(i, j);
 						costLeft = 1e10;
 						costUp = 1e10;
-						spcOld = calcSpatialCost(i, j, fijOld);
-						apcOld = calcAppearanceCost(i, j, fijOld);
-						costOld = alphaAp*apcOld + alphaSp*spcOld;
-						fijLeft = getFij(i, j - 1) + fij(0,1);
+						//spcOld = calcSpatialCost(i, j, fijOld);
+						//apcOld = calcAppearanceCost(i, j, fijOld);
+						//costOld = alphaAp*apcOld + alphaSp*spcOld;
+						costOld = calcTotalCost(i, j, fijOld);
+						fijLeft = getFij(i, j - 1) + fij(0, 1);
 						fijUp = getFij(i - 1, j) + fij(1, 0);
 						if (isMask(i, j - 1) && isValid(fijLeft))
 						{
-							spcLeft = calcSpatialCost(i, j, fijLeft);
-							apcLeft = calcAppearanceCost(i, j, fijLeft);
-							costLeft = spcLeft*alphaSp + apcLeft*alphaAp;
+							//spcLeft = calcSpatialCost(i, j, fijLeft);
+							//apcLeft = calcAppearanceCost(i, j, fijLeft);
+							//costLeft = spcLeft*alphaSp + apcLeft*alphaAp;
+							costLeft = calcTotalCost(i, j, fijLeft);
 						}
 						if (isMask(i - 1, j) && isValid(fijUp))
 						{
-							spcUp = calcSpatialCost(i, j, fijUp);
-							apcUp = calcAppearanceCost(i, j, fijUp);
-							costUp = spcUp*alphaSp + apcUp*alphaAp;
+							//spcUp = calcSpatialCost(i, j, fijUp);
+							//apcUp = calcAppearanceCost(i, j, fijUp);
+							//costUp = spcUp*alphaSp + apcUp*alphaAp;
+							costUp = calcTotalCost(i, j, fijUp);
 						}
-						if (costUp < costOld && costUp < costLeft) 
+						if (costUp < costOld && costUp < costLeft)
 						{
 							costOld = costUp;
 							setFij(i, j, fijUp);
@@ -151,7 +241,7 @@ void fillOneLevel(int* initf, float* I, const bool* M, float* D, int level, int 
 						//random search
 						drs = wrs*rrs;
 						srand((unsigned)time(NULL));
-						
+
 						while (drs>D[GG(i, j)] + 3) {
 							fijRS = randFij(i, j, drs);
 							costRS = 1e10;
@@ -163,9 +253,10 @@ void fillOneLevel(int* initf, float* I, const bool* M, float* D, int level, int 
 							if (numTol <= 0) {
 								continue;
 							}
-							spcRS = calcSpatialCost(i, j, fijRS);
-							apcRS = calcAppearanceCost(i, j, fijRS);
-							costRS = spcRS*alphaSp + apcRS*alphaAp;
+							//spcRS = calcSpatialCost(i, j, fijRS);
+							//apcRS = calcAppearanceCost(i, j, fijRS);
+							//costRS = spcRS*alphaSp + apcRS*alphaAp;
+							costRS = calcTotalCost(i, j, fijRS);
 							if (costRS < costOld) {
 								setFij(i, j, fijRS);
 								costOld = costRS;
@@ -192,22 +283,25 @@ void fillOneLevel(int* initf, float* I, const bool* M, float* D, int level, int 
 						fijOld = getFij(i, j);
 						costRight = 1e10;
 						costDown = 1e10;
-						spcOld = calcSpatialCost(i, j, fijOld);
-						apcOld = calcAppearanceCost(i, j, fijOld);
-						costOld = alphaAp*apcOld + alphaSp*spcOld;
+						//spcOld = calcSpatialCost(i, j, fijOld);
+						//apcOld = calcAppearanceCost(i, j, fijOld);
+						//costOld = alphaAp*apcOld + alphaSp*spcOld;
+						costOld = calcTotalCost(i, j, fijOld);
 						fijRight = getFij(i, j + 1) - fij(0, 1);
 						fijDown = getFij(i + 1, j) - fij(1, 0);
 						if (isMask(i, j + 1) && isValid(fijRight))
 						{
-							spcRight = calcSpatialCost(i, j, fijRight);
-							apcRight = calcAppearanceCost(i, j, fijRight);
-							costRight = spcRight*alphaSp + apcRight*alphaAp;
+							//spcRight = calcSpatialCost(i, j, fijRight);
+							//apcRight = calcAppearanceCost(i, j, fijRight);
+							//costRight = spcRight*alphaSp + apcRight*alphaAp;
+							costRight = calcTotalCost(i, j, fijRight);
 						}
 						if (isMask(i + 1, j) && isValid(fijDown))
 						{
-							spcDown = calcSpatialCost(i, j, fijDown);
-							apcDown = calcAppearanceCost(i, j, fijDown);
-							costDown = spcDown*alphaSp + apcDown*alphaAp;
+							//spcDown = calcSpatialCost(i, j, fijDown);
+							//apcDown = calcAppearanceCost(i, j, fijDown);
+							//costDown = spcDown*alphaSp + apcDown*alphaAp;
+							costDown = calcTotalCost(i, j, fijDown);
 						}
 						if (costDown < costOld && costDown < costRight)
 						{
@@ -233,9 +327,10 @@ void fillOneLevel(int* initf, float* I, const bool* M, float* D, int level, int 
 							if (numTol <= 0) {
 								continue;
 							}
-							spcRS = calcSpatialCost(i, j, fijRS);
-							apcRS = calcAppearanceCost(i, j, fijRS);
-							costRS = spcRS*alphaSp + apcRS*alphaAp;
+							//spcRS = calcSpatialCost(i, j, fijRS);
+							//apcRS = calcAppearanceCost(i, j, fijRS);
+							//costRS = spcRS*alphaSp + apcRS*alphaAp;
+							costRS = calcTotalCost(i, j, fijRS);
 							if (costRS < costOld) {
 								setFij(i, j, fijRS);
 								costOld = costRS;
@@ -258,17 +353,11 @@ void fillOneLevel(int* initf, float* I, const bool* M, float* D, int level, int 
 void fillIwithF() {
 	//printf("entering fillIwithF\n");
 	int i, j, k, r = R, c = C;
-	//for (i = 0; i < R; ++i) {
-	//	for (j = 0; j < C; ++j) {
-	//		printf("%d ", f[HH(i,j,0,2)]);
-	//	}
-	//	printf("\n");
-	//}
 
 	for (i = 0; i < R; ++i) {
 		for (j = 0; j < C; ++j) {
 			//if (mask[G(i, j, r, c)])
-			if(isMask(i,j))
+			if (isMask(i, j))
 			{
 				//int fij[2] = { f[H(i,j,0,r,c,2)], f[H(i,j,1,r,c,2)] };
 				fij ff = getFij(i, j);
@@ -281,27 +370,34 @@ void fillIwithF() {
 	}
 }
 
+double calcTotalCost(int i, int j, fij ff) {
+	double spc = calcSpatialCost(i, j, ff);
+	double apc = calcAppearanceCost(i, j, ff);
+	double strc = calcLineCost(i, j, ff);
+	return spc*alphaSp + apc*alphaAp + strc*alphaStr;
+}
+
 // calculate cost_spatial using 8-neighbor
 // seemingly, the neighbor pixel which is out of the mask should not be considered
-double calcSpatialCost(int i, int j, fij ff){
+double calcSpatialCost(int i, int j, fij ff) {
 
 	double spc = 0;
 	double w = 0.125;
 	int maxdist = MAX(R, C) / 3; // this should be like this way...
 	double tao = maxdist*maxdist;
-	int r_begin = MAX(i - 1, 0), r_end = MIN(i + 1, R-1);
-	int c_begin = MAX(j - 1, 0), c_end = MIN(j + 1, C-1);
-	int r, c, cnt=0;
+	int r_begin = MAX(i - 1, 0), r_end = MIN(i + 1, R - 1);
+	int c_begin = MAX(j - 1, 0), c_end = MIN(j + 1, C - 1);
+	int r, c, cnt = 0;
 	for (r = r_begin; r <= r_end; ++r) {
 		for (c = c_begin; c <= c_end; ++c) {
 			//% f(p) = fij, f(p + v) = f(r, c, :), v = [r - i], c - j], f(p) + v = fij + v
-			fij v = fij(r, c) - fij(i, j), fv = getFij(r,c);
+			fij v = fij(r, c) - fij(i, j), fv = getFij(r, c);
 			fij diff = fv - (ff + v);
 			spc = spc + MIN(diff.norm2(), tao);
 			cnt++;
 		}
 	}
-	spc = spc*w/cnt;
+	spc = spc*w / cnt;
 	return spc;
 }
 
@@ -312,11 +408,11 @@ double calcAppearanceCost(int i, int j, fij ff) {
 	double w = 1.0 / 25;
 	int r_begin = MAX(i - 2, 0), r_end = MIN(i + 2, R - 1);
 	int c_begin = MAX(j - 2, 0), c_end = MIN(j + 2, C - 1);
-	int r, c, cnt=0;
+	int r, c, cnt = 0;
 	float i1[3] = {}, i2[3] = {};
 	for (r = r_begin; r <= r_end; ++r) {
 		for (c = c_begin; c <= c_end; ++c) {
-			fij v(r-i, c-j), fv = ff+v;
+			fij v(r - i, c - j), fv = ff + v;
 			for (int k = 0; k < 3; ++k) {
 				i1[k] = im[HH(r, c, k, 3)];
 			}
@@ -332,6 +428,40 @@ double calcAppearanceCost(int i, int j, fij ff) {
 	}
 	apc = apc*w;
 	return apc * 255 / cnt; // 8-bit grayscale, [0,1] is too small...compared to spc..
+}
+
+double d_cs(fij ff, line ln) {
+	int x1 = ln.point1[0], y1 = ln.point1[1];
+	int x2 = ln.point2[0], y2 = ln.point2[1];
+	fij f1(y1, x1), f2(y2, x2);
+	int lenline = (f1 - f2).norm2();
+	int ffproj = (f1 - f2) * (ff - f2);
+	if (ffproj > lenline || ffproj < 0)
+		return kappa;
+
+	double x = ff[1], y = ff[0];
+	double A = cosd(ln.theta), B = sind(ln.theta), C = -ln.rho;
+	double dist = A*x + B*y + C;
+	return dist;
+}
+
+double calcLineCost(int r, int c, fij ff) {
+	//double costs[nlines] = {};
+	double omega, dp, dfp, curr;
+	double ret = 0, maxomega = 0;
+	for (int i = 0; i < nlines; ++i) {
+		dp = d_cs(fij(r,c), lines[i]);
+		dfp = d_cs(ff, lines[i]);
+		omega = cs_imp * exp(-8 * sq(dp / cs_rad));
+		curr = sq(dp - dfp) * omega;
+		if (maxomega < omega)
+		{
+			ret = curr;
+			maxomega = omega;
+		}
+		//costs[i] = sq(dp - dfp) * omega;
+	}
+	return ret;
 }
 
 inline fij  getFij(int i, int j) {
@@ -375,23 +505,25 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 #define INM			prhs[2]
 #define	IND			prhs[3]
 #define LEVEL		prhs[4]
-#define USELINE		prhs[5]
+#define LINES		prhs[5]
 #define ITERNUM		prhs[6]
+#define INPARAMS	prhs[7]
 
 	// input
 	int*	initf = (int*)mxGetData(INITF);
-	float*	I =	(float*)mxGetData(INI);
+	float*	I = (float*)mxGetData(INI);
 	bool*	M = (bool*)mxGetData(INM);
 	float*	D = (float*)mxGetData(IND);
-	
-	int		level = (int)mxGetScalar(LEVEL);
-	int		useline = (int)mxGetScalar(USELINE);
-	int		iternum = (int)mxGetScalar(ITERNUM);
 
-	// output
 	R = mxGetM(INM);
 	C = mxGetN(INM);
 	printf("R=%d, C=%d\n", R, C);
+
+	int		level = (int)mxGetScalar(LEVEL);
+	getLines(LINES);
+	getParams(INPARAMS);
+	int		iternum = (int)mxGetScalar(ITERNUM);
+
 
 	//FILLEDI = mxCreateNumericMatrix(R*C * 3, 1, mxSINGLE_CLASS, mxREAL);
 	const int dim3[3] = { R, C, 3 };
@@ -431,16 +563,19 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		//printf("\n");
 	}
 
-	fillOneLevel(initf, I, M, D, level, useline, iternum);
+	fillOneLevel(initf, I, M, D, level, lines, iternum);
 
-	double sumspc = 0, sumapc = 0;
+	double sumspc = 0, sumapc = 0, sumstr = 0;
 	for (int j = 0; j < C; ++j) {
 		for (int i = 0; i < R; ++i) {
-			sumspc += calcSpatialCost(i, j, getFij(i, j));
-			sumapc += calcAppearanceCost(i, j, getFij(i, j));
+			if (isMask(i, j)) {
+				sumspc += calcSpatialCost(i, j, getFij(i, j));
+				sumapc += calcAppearanceCost(i, j, getFij(i, j));
+				sumstr += calcLineCost(i, j, getFij(i, j));
+			}
 		}
 	}
-	printf("total spc = %lf, total apc = %lf\n", sumspc, sumapc);
+	printf("total spc = %lf, total apc = %lf, total strc = %lf\n", sumspc, sumapc, sumstr);
 	//filledI = im; 软拷贝不行
 	//retf = f;	同上
 	for (int i = 0; i < R; ++i) {
@@ -454,6 +589,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 	memcpy(filledI, im, sizeof(float)*R*C * 3);
 	memcpy(retf, f, sizeof(int)*R*C * 2);
+	if (lines)
+		delete lines;
 
 
 	return;
