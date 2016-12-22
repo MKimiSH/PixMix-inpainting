@@ -1,4 +1,4 @@
-function res = clustering(array)
+function res = clustering_smallst(array)
 %UNTITLED4 Summary of this function goes here
 %   Detailed explanation goes here
     temp = array;

@@ -1,4 +1,4 @@
-function tmouse(action)
+function tmouse_smallst(action)
 %UNTITLED3 Summary of this function goes here
 %   Detailed explanation goes here
 if(nargin == 0)
@@ -12,10 +12,10 @@ switch(action)
    %axis([0 size(snooker,1) 0 size(snooker,2)]);% 设定图轴范围
   % box on;% 将图轴加上图框
    %title('Click and drag your mouse in this window!');
-   set(gcf, 'WindowButtonDownFcn', 'tmouse down');
+   set(gcf, 'WindowButtonDownFcn', 'tmouse_smallst down');
   case 'down'
-   set(gcf, 'WindowButtonMotionFcn', 'tmouse move'); 
-   set(gcf, 'WindowButtonUpFcn', 'tmouse up');
+   set(gcf, 'WindowButtonMotionFcn', 'tmouse_smallst move'); 
+   set(gcf, 'WindowButtonUpFcn', 'tmouse_smallst up');
   case 'move'
    currPt = get(gca, 'CurrentPoint');
    x = currPt(1,1);
@@ -29,7 +29,8 @@ switch(action)
    set(gcf, 'WindowButtonMotionFcn', '');
    set(gcf, 'WindowButtonUpFcn', '');
    landmarks = unique(landmarks, 'rows', 'stable');
-   fres = (detect_obj(snooker, landmarks));   
+   fres = (detect_obj_smallst(snooker, landmarks));   
+   edges = edge(fres, 'sobel');
 end
 end
 

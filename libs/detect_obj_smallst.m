@@ -1,4 +1,4 @@
-function res = detect_obj(img, landmarks)
+function res = detect_obj_smallst(img, landmarks)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 sz = size(img);
@@ -7,17 +7,17 @@ res = zeros(sz(2:-1:1));
 gamma = 0.95;
 l = size(landmarks,1);
 U = zeros(l, 3);
-m3 = meanfilter(image, 3);
+m3 = meanfilter_smallst(image, 3);
 %m5 = meanfilter(img,5);
-m7 = meanfilter(image,7);
+m7 = meanfilter_smallst(image,7);
 
 %U = mf(m3, m7, landmarks);
 for i = 1:l
-    U(i,:)= mf(m3, m7, landmarks(i,2),landmarks(i,1));
+    U(i,:)= mf_smallst(m3, m7, landmarks(i,2),landmarks(i,1));
 end
 U
 %fenlei
-C = clustering(U);
+C = clustering_smallst(U);
 size(C)
 % vi
 lC = size(C,2);
@@ -38,7 +38,7 @@ snookercp = img;
 % x = reshape(x, 1, numel(x));
 % y = reshape(y, 1, numel(y));
 % in = inpolygon(x,y, landmarks(:,2), landmarks(:,1));
-res = (detect(landmarks(:,2), landmarks(:,1),m3,m7, U,vi,[minx, maxx, miny, maxy],gamma));
+res = (mex_detect_smallst(landmarks(:,2), landmarks(:,1),m3,m7, U,vi,[minx, maxx, miny, maxy],gamma));
 a = size(res,1);
 b = size(res,2);
 for i = 1:a

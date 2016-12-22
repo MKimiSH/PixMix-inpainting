@@ -1,4 +1,4 @@
-function d = dis(Uk, Uj, v)
+function d = dis_smallst(Uk, Uj, v)
 %UNTITLED5 Summary of this function goes here
 %   Detailed explanation goes here
     d = 0;

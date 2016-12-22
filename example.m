@@ -24,4 +24,4 @@ hold on;
 
 %landmarks = false(size(snooker));
 landmarks = [];
-tmouse();
+tmouse_smallst();
