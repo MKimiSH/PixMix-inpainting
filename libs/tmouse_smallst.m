@@ -10,7 +10,7 @@ global fres;
 switch(action)
   case 'start'
    %axis([0 size(snooker,1) 0 size(snooker,2)]);% 设定图轴范围
-  % box on;% 将图轴加上图框
+  % box on;% 将图轴加上图�?
    %title('Click and drag your mouse in this window!');
    set(gcf, 'WindowButtonDownFcn', 'tmouse_smallst down');
   case 'down'
@@ -31,6 +31,11 @@ switch(action)
    landmarks = unique(landmarks, 'rows', 'stable');
    fres = (detect_obj_smallst(snooker, landmarks));   
    edges = edge(fres, 'sobel');
+   
+   %object_tracking(last_frame,this_frame,is_first_frame,last_contour,opticalFlow)
+   img = im2uint8(rgb2gray(snooker));
+   [H,this_contour,opticalFlow] = object_tracking(img,img,1,edges,[]);
+   figure,imshow(this_contour);
 end
 end
 

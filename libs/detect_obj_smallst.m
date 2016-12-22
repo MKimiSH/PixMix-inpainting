@@ -92,7 +92,7 @@ end
 for i = 1 :size(landmarks,1)
     snookercp(landmarks(i,2),landmarks(i,1),:)=  [255,255,255];
 end
-figure;
+%figure;
 imshow(snookercp);
 end
 
