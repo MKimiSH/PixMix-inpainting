@@ -51,7 +51,7 @@ switch(action)
        
        figure,imshow(snooker);
        hold on
-       imshow(this_contour);
+       plot(this_contour);
    end
    
 end
