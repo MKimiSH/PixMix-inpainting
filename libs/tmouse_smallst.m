@@ -7,10 +7,11 @@ end
 global snooker;
 global landmarks;
 global fres;
+global v;
 switch(action)
   case 'start'
    %axis([0 size(snooker,1) 0 size(snooker,2)]);% 设定图轴范围
-  % box on;% 将图轴加上图�?
+  % box on;% 将图轴加上图�?
    %title('Click and drag your mouse in this window!');
    set(gcf, 'WindowButtonDownFcn', 'tmouse_smallst down');
   case 'down'
@@ -30,14 +31,26 @@ switch(action)
    set(gcf, 'WindowButtonUpFcn', '');
    landmarks = unique(landmarks, 'rows', 'stable');
    fres = (detect_obj_smallst(snooker, landmarks));   
-   edges = edge(fres, 'sobel');
+   last_contour = edge(fres, 'sobel');
    
    %object_tracking(last_frame,this_frame,is_first_frame,last_contour,opticalFlow)
-   img = im2uint8(rgb2gray(snooker));
-   [H,last_contour,opticalFlow] = object_tracking(img,img,1,edges,[]);
-   figure,imshow(last_contour);
-   [H,this_contour,opticalFlow] = object_tracking(img,img,0,last_contour,opticalFlow);
-   figure,imshow(this_contour);
+   last_frame = im2uint8(rgb2gray(snooker));
+   
+   snooker = im2uint8(rgb2gray(readFrame(v)));
+    i = 0;
+    [H,this_contour,opticalFlow] = object_tracking(snooker,last_frame,1,last_contour,[]);
+       figure,imshow(this_contour); 
+   while hasFrame(v)
+      i = i + 1
+      if i > 500
+        break;
+      end
+       last_frame = snooker;
+       snooker = im2uint8(rgb2gray(readFrame(v)));
+       [H,this_contour,opticalFlow] = object_tracking(snooker,last_frame,0,last_contour,opticalFlow);
+       imshow(this_contour);
+   end
+   
 end
 end
 

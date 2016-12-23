@@ -15,13 +15,17 @@ clear;
 %test1 = insertMarker(snooker, landmarks, 'circle','color','red');imshow(test1)
 
 global snooker;
+global v;
 global landmarks;
 global fres;
 
-snooker = imread('s.jpg');
+%snooker = imread('s.jpg');
+%imshow(snooker);
+%hold on;
+v = VideoReader('output.mp4');
+snooker = readFrame(v);
 imshow(snooker);
 hold on;
-
 %landmarks = false(size(snooker));
 landmarks = [];
 tmouse_smallst();
