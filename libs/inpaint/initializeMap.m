@@ -1,8 +1,9 @@
 function f = initializeMap(orif, M)
-
+fprintf('start iniMap\n');
+tic
 [R, C] = size(M);
-f = zeros(R, C, 2); % 1 for row mapping, 2 for column
-f = int32(f);
+f = zeros(R, C, 2, 'int32'); % 1 for row mapping, 2 for column
+% f = int32(f);
 % dbM = repmat(M, [1 2]);
 % dbM = reshape(dbM, [size(M,1), size(M,2), 2]);
 
@@ -54,6 +55,7 @@ for i=1:R
         end
     end
 end
+toc
 fprintf('%d violations and %d total mask size', cnt, nnz(M));
 
 end

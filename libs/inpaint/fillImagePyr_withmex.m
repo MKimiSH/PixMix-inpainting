@@ -6,7 +6,7 @@ function [pyI,F] = fillImagePyr_withmex(pyI, pyM, useLineConstr)
 t1 = tic;
 L = length(pyM);
 curF = [];
-numitertop = floor((linspace(200, 10, L)));
+numitertop = floor((linspace(200, 30, L)));
 params.alphaSp = 0.025;
 params.alphaAp = 0.25;
 params.cs_imp = 1;
@@ -19,9 +19,10 @@ end
 
 for l = 1:L
     pyI{l} = maskImage(pyI{l}, pyM{l});
-    curF = initializeMap(curF, pyM{l} );
-    if(l==1)
-%         showF(pyI{l}, pyM{l}, curF);
+    if(l==0)
+        curF = initializeMap(curF, pyM{l} );
+    else
+        curF = vec_initMap(curF, pyM{l});
     end
     fprintf('level %d\n', l);
     tic
@@ -32,13 +33,13 @@ for l = 1:L
 %     [pyI{l}, curF] = mex_fillOneLevel( curF, pyI{l}, pyM{l}, D, l, useLineConstr, numiter );
     [pyI{l}, curF] = mex_fillOneLevel_withline( curF, pyI{l}, pyM{l}, D, l, linesPyr{l}, numiter, params );
     if(mod(l,2)==1 && l<L)
-        showF(pyI{l}, pyM{l}, curF);
+%         showF(pyI{l}, pyM{l}, curF);
     end
     toc
     fprintf('level %d end\n', l);
 %     prevF = curF;
 end
-showF(pyI{l}, pyM{l}, curF);
+% showF(pyI{l}, pyM{l}, curF);
 toc(t1)
 F = curF;
 end
