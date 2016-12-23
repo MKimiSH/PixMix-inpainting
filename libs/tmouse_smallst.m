@@ -34,7 +34,9 @@ switch(action)
    
    %object_tracking(last_frame,this_frame,is_first_frame,last_contour,opticalFlow)
    img = im2uint8(rgb2gray(snooker));
-   [H,this_contour,opticalFlow] = object_tracking(img,img,1,edges,[]);
+   [H,last_contour,opticalFlow] = object_tracking(img,img,1,edges,[]);
+   figure,imshow(last_contour);
+   [H,this_contour,opticalFlow] = object_tracking(img,img,0,last_contour,opticalFlow);
    figure,imshow(this_contour);
 end
 end
