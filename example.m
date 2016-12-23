@@ -23,6 +23,9 @@ global fres;
 %imshow(snooker);
 %hold on;
 v = VideoReader('output.mp4');
+% for i = 1:60
+%     readFrame(v);
+% end
 snooker = readFrame(v);
 imshow(snooker);
 hold on;

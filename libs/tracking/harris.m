@@ -77,7 +77,9 @@ function [corner_list] = harris(img,candidate_list,min_corner_num)
     extended_candidate_list = sortrows(extended_candidate_list,[4 3]);
     extended_candidate_list = flipud(extended_candidate_list);%×ª³É½µÐòÅÅÐò
     
-    if (extended_candidate_list(min_corner_num,4) == 8) && (extended_candidate_list(min_corner_num,3) > 0.01*Rmax)
+    if count < min_corner_num
+        corner_list = extended_candidate_list(1:count,1:2);
+    elseif (extended_candidate_list(min_corner_num,4) == 8) && (extended_candidate_list(min_corner_num,3) > 0.01*Rmax)
         sum = 0;
         for i = 1:count
             if (extended_candidate_list(i,4) == 8) && (extended_candidate_list(i,3) > 0.01*Rmax)
