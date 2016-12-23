@@ -4,7 +4,7 @@ pyLines = cell(L, 1);
 
 proclvl = L-1;
 pyLines{proclvl} = linesNearMask(pyI{proclvl}, pyM{proclvl}, proclvl);
-showHoughLines(pyI{proclvl}, pyM{proclvl}, pyLines{proclvl});
+% showHoughLines(pyI{proclvl}, pyM{proclvl}, pyLines{proclvl});
 nlines = length(pyLines{proclvl});
 toplines = pyLines{proclvl};
 
