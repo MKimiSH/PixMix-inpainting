@@ -3,11 +3,7 @@ function [] = inpaintVideo(vidname, outname)
 % remove the selected object, output the resulting video with _outname_
 
 %% read video
-% base = 'videos\';
-% vidName =  'small_out8.mp4';
-% maskName = 'mask_more_bin.png'; % mask is a single image.
-% fileName = [base, vidName];
-% vidName(end-3:end) = [];
+
 startTime = 0;
 endTime = 3;
 
@@ -38,6 +34,7 @@ end
 % for second frame
 f = f0;
 oflow = [];
+H = [];
 for i=2:timeSpan
     [vid{i}, f, contour, H, oflow] = inpaintSecondFrame(vid{i}, vid{i-1}, f, oflow);
 end

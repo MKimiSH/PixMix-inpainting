@@ -13,6 +13,7 @@ float calcSumTotalCost();
 inline fij  getFij(int i, int j);
 inline void setFij(int i, int j, fij ff);
 inline bool isMask(int i, int j);
+inline bool isNUMask(int i, int j);
 inline bool isValid(int i, int j);
 inline bool isValid(fij ff);
 inline bool checkConvergence(float, float);
@@ -46,6 +47,7 @@ void fillOneLevel(int* initf, float* I, const bool* M, float* D, int level, line
 int		*f;
 float	*im;
 bool	*mask;
+bool	*numask;
 mxArray *linesptr;
 int		R = 0, C = 0;
 float alphaSp = .005, alphaAp = 0.5, alphaStr = 1 - alphaSp - alphaAp;
@@ -131,10 +133,10 @@ void fillOneLevel(int* initf, float* I, const bool* M, float* D, int level, line
 
 	// propagation and random search
 	int numIter = iternum;
-	float prevCost = 1e200, currCost = 0;
+	float prevCost = 1e20, currCost = 0;
 	for (int it = 0; it<numIter; ++it) {
-		calcSumTotalCost();
 		fillIWithF();
+		calcSumTotalCost();
 		if (checkConvergence(prevCost, currCost)) {
 			printf("converged before iteration %d\n", it);
 			return;
@@ -295,6 +297,9 @@ void fillIWithF() {
 }
 
 float calcTotalCost(int i, int j, fij ff) {
+	if (isNUMask(i, j)) {
+		return 1e5;
+	}
 	float spc = calcSpatialCost(i, j, ff);
 	float apc = calcAppearanceCost(i, j, ff);
 	float strc = calcLineCost(i, j, ff);
@@ -420,6 +425,9 @@ inline void setFij(int i, int j, fij ff) {
 inline bool isMask(int i, int j) {
 	return (i >= 0 && i < R) && (j >= 0 && j < C) && mask[GG(i, j)] != 0;
 }
+inline bool isNUMask(int i, int j) {
+	return numask[GG(i, j)];
+}
 inline bool isValid(int i, int j) {
 	return (i >= 0 && i < R) && (j >= 0 && j < C) && mask[GG(i, j)] == 0;
 }
@@ -446,11 +454,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 #define INITF		prhs[0]
 #define	INI			prhs[1]
 #define INM			prhs[2]
-#define	IND			prhs[3]
-#define LEVEL		prhs[4]
-#define LINES		prhs[5]
-#define ITERNUM		prhs[6]
-#define INPARAMS	prhs[7]
+#define INNUM		prhs[3]
+#define	IND			prhs[4]
+#define LEVEL		prhs[5]
+#define LINES		prhs[6]
+#define ITERNUM		prhs[7]
+#define INPARAMS	prhs[8]
 
 	// input
 	printf("???\n");
@@ -458,6 +467,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	float*	I = (float*)mxGetData(INI);
 	printf("??????\n");
 	bool*	M = (bool*)mxGetData(INM);
+	numask = (bool*)mxGetData(INNUM);
 	float*	D = (float*)mxGetData(IND);
 
 	R = mxGetM(INM);
