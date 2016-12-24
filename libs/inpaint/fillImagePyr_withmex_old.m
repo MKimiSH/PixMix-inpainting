@@ -17,7 +17,7 @@ params.cs_rad = 20;
 
 linesPyr = cell(L, 1);
 if useLineConstr>0
-    linesPyr = pyrLines(pyI, pyM, L); % detect lines that are near to or cut the mask
+    linesPyr = pyrLines(pyI, pyM, [], L); % detect lines that are near to or cut the mask
 end
 
 for l = 1:L
