@@ -62,5 +62,7 @@ function [H,this_contour,opticalFlow] = object_tracking(last_frame,this_frame,is
     end
 
     this_contour = list2matrix(this_contour_list,1,img_height,img_width);
+    
+    this_contour = imclose(this_contour,strel('disk',3));
 
 end
