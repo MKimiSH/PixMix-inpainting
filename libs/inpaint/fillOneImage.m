@@ -7,11 +7,11 @@ M = im2single(M);
 M = M>0;
 
 %% construct pyramid of an image
-[pyI, pyM] = constructPyr(I, M); % the levels of the pyramid is computed rather than assigned.
+[pyI, pyM] = constructPyr_old(I, M); % the levels of the pyramid is computed rather than assigned.
 
 %% inpainting through the pyramid
 % useLineConstr;
-pyI = fillImagePyr_withmex(pyI, pyM, useLineConstr);
+pyI = fillImagePyr_withmex_old(pyI, pyM, useLineConstr);
 
 resI = pyI{length(pyI)};
 

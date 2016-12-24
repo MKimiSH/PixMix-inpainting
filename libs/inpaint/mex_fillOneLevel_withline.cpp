@@ -297,7 +297,7 @@ void fillIWithF() {
 }
 
 float calcTotalCost(int i, int j, fij ff) {
-	if (isNUMask(i, j)) {
+	if (numask != NULL && isNUMask(i, j)) {
 		return 1e5;
 	}
 	float spc = calcSpatialCost(i, j, ff);
@@ -312,7 +312,7 @@ float calcSpatialCost(int i, int j, fij ff) {
 
 	float spc = 0;
 	float w = 0.125;
-	int maxdist = MAX(R, C) / 3; // this should be like this way...
+	int maxdist = MAX(R, C) / 2; // this should be like this way...
 	float tao = maxdist*maxdist;
 	int r_begin = MAX(i - 1, 0), r_end = MIN(i + 1, R - 1);
 	int c_begin = MAX(j - 1, 0), c_end = MIN(j + 1, C - 1);
@@ -467,7 +467,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	float*	I = (float*)mxGetData(INI);
 	printf("??????\n");
 	bool*	M = (bool*)mxGetData(INM);
-	numask = (bool*)mxGetData(INNUM);
+	//numask = (bool*)mxGetData(INNUM);
+	int t = mxGetNumberOfElements(INNUM);
+	if (t == 0) 
+		numask = NULL;
+	else numask = (bool*)mxGetData(INNUM);
+
 	float*	D = (float*)mxGetData(IND);
 
 	R = mxGetM(INM);
