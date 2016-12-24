@@ -49,9 +49,13 @@ switch(action)
        snooker = im2uint8(rgb2gray(readFrame(v)));
        [H,this_contour,opticalFlow] = object_tracking(snooker,last_frame,0,this_contour,opticalFlow);
        
+       harris_global = harris_old(snooker);
+       
        figure,imshow(snooker);
        hold on
-       imshow(this_contour);
+       imshow(mat2gray(harris_global))
+       hold off
+       figure,imshow(this_contour);
    end
    
 end

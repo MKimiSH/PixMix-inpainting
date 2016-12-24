@@ -77,17 +77,17 @@ function [corner_list] = harris(img,candidate_list,min_corner_num)
     extended_candidate_list = sortrows(extended_candidate_list,[4 3]);
     extended_candidate_list = flipud(extended_candidate_list);%转成降序排序
     
-    if count < min_corner_num
+    if count < min_corner_num %如果要求的corner数量比所有可能的candidate还多,就把所有的candidate都作为角点
         corner_list = extended_candidate_list(1:count,1:2);
-    elseif (extended_candidate_list(min_corner_num,4) == 8) && (extended_candidate_list(min_corner_num,3) > 0.01*Rmax)
+    elseif (extended_candidate_list(min_corner_num,4) == 8) && (extended_candidate_list(min_corner_num,3) > 0.01*Rmax) %如果确保了至少有min_corner_num个优质角点
         sum = 0;
         for i = 1:count
             if (extended_candidate_list(i,4) == 8) && (extended_candidate_list(i,3) > 0.01*Rmax)
                 sum = sum+1;
             end
         end
-        corner_list = extended_candidate_list(1:sum,1:2);
-    else
+        corner_list = extended_candidate_list(1:sum,1:2);%最后返回所有的优质角点
+    else %如果candidate很多，但优质角点不多，则返回min_corner_num个相对最好的candidate
         corner_list = extended_candidate_list(1:min_corner_num,1:2);
     end
 end

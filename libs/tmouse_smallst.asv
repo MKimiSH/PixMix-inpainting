@@ -4,7 +4,7 @@ function tmouse_smallst(action)
 if(nargin == 0)
     action = 'start';
 end
-global snooker;
+global ;
 global landmarks;
 global fres;
 global v;
@@ -31,14 +31,14 @@ switch(action)
    set(gcf, 'WindowButtonUpFcn', '');
    landmarks = unique(landmarks, 'rows', 'stable');
    fres = (detect_obj_smallst(snooker, landmarks));   
-   last_contour = edge(fres, 'sobel');
+   this_contour = edge(fres, 'sobel');
    
-   %object_tracking(last_frame,this_frame,is_first_frame,last_contour,opticalFlow)
+   %function [H,this_contour,opticalFlow] = object_tracking(last_frame,this_frame,is_first_frame,last_contour,opticalFlow)
    last_frame = im2uint8(rgb2gray(snooker));
    
    snooker = im2uint8(rgb2gray(readFrame(v)));
     i = 0;
-    [H,this_contour,opticalFlow] = object_tracking(snooker,last_frame,1,last_contour,[]);
+    [H,this_contour,opticalFlow] = object_tracking(snooker,last_frame,1,this_contour,[]);
        figure,imshow(this_contour); 
    while hasFrame(v)
       i = i + 1
@@ -47,9 +47,12 @@ switch(action)
       end
        last_frame = snooker;
        snooker = im2uint8(rgb2gray(readFrame(v)));
-       [H,this_contour,opticalFlow] = object_tracking(snooker,last_frame,0,last_contour,opticalFlow);
+       [H,this_contour,opticalFlow] = object_tracking(snooker,last_frame,0,this_contour,opticalFlow);
+       
+       harris_global = harris_old(snooker);
        
        figure,imshow(snooker);
+       hold on
        imshow(this_contour);
    end
    

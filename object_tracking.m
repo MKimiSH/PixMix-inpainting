@@ -48,7 +48,13 @@ function [H,this_contour,opticalFlow] = object_tracking(last_frame,this_frame,is
         matchedpoints_this(i,:) = [this_y,this_x];
     end
 
-    tform = estimateGeometricTransform(fliplr(matchedpoints_last),fliplr(matchedpoints_this),'projective');
+    [tform, ~, ~, status] = estimateGeometricTransform(fliplr(matchedpoints_last),fliplr(matchedpoints_this),'projective');
+    if status == 2
+        H = [1,0,0;0,1,0;0,0,1];
+        this_contour = last_contour;
+        return
+    end
+    
     H = tform.T%从角点位置变换,得到两帧之间的投影变换关系
 
     this_contour_list = fliplr(last_contour_list);
