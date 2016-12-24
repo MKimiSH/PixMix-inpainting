@@ -22,7 +22,7 @@ global fres;
 %snooker = imread('s.jpg');
 %imshow(snooker);
 %hold on;
-v = VideoReader('output.mp4');
+v = VideoReader('fr1.mp4');
 % for i = 1:60
 %     readFrame(v);
 % end

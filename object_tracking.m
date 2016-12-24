@@ -48,19 +48,27 @@ function [H,this_contour,opticalFlow] = object_tracking(last_frame,this_frame,is
         matchedpoints_this(i,:) = [this_y,this_x];
     end
 
-    tform = estimateGeometricTransform(fliplr(matchedpoints_last),fliplr(matchedpoints_this),'projective');
+    [tform, ~, ~, status] = estimateGeometricTransform(fliplr(matchedpoints_last),fliplr(matchedpoints_this),'projective');
+    if status == 2
+        H = [1,0,0;0,1,0;0,0,1];
+        this_contour = last_contour;
+        return
+    end
+    
     H = tform.T%从角点位置变换,得到两帧之间的投影变换关系
 
-    this_contour_list = fliplr(last_contour_list)
+    this_contour_list = fliplr(last_contour_list);
     for i = 1:last_contour_count
         cur_point = this_contour_list(i,:);
         extended_cur_point = [cur_point';1];
-        transformed_extended_cur_point = H*extended_cur_point;
-        transformed_x = round(transformed_extended_cur_point(1));% / transformed_extended_cur_point(3));
-        transformed_y = round(transformed_extended_cur_point(2));% / transformed_extended_cur_point(3));
+        transformed_extended_cur_point = H'*extended_cur_point;
+        transformed_x = round(transformed_extended_cur_point(1) / transformed_extended_cur_point(3));
+        transformed_y = round(transformed_extended_cur_point(2) / transformed_extended_cur_point(3));
         this_contour_list(i,:) = [transformed_y,transformed_x];
     end
 
     this_contour = list2matrix(this_contour_list,1,img_height,img_width);
+    
+    this_contour = imclose(this_contour,strel('disk',3));
 
 end
