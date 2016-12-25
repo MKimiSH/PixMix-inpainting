@@ -8,9 +8,9 @@ function [pyI,F] = fillImagePyr_withmex_old(pyI, pyM, useLineConstr)
 t1 = tic;
 L = length(pyM);
 curF = [];
-numitertop = floor((linspace(200, 40, L)));
+numitertop = floor((linspace(200, 10, L)));
 params.alphaSp = 0.025;
-params.alphaAp = 0.25;
+params.alphaAp = 0.575;
 params.cs_imp = 1;
 params.cs_rad = 20;
 
@@ -34,11 +34,13 @@ for l = 1:L
     curF = int32(curF);
     numiter = int32(numitertop(l));
     
-    curF = permute(curF, [3 1 2]); pyI{l} = permute(pyI{l}, [3 1 2]);
+    curF = permute(curF, [3 1 2]); pyI{l} = im2uint8(permute(pyI{l}, [3 1 2]));
 %     [pyI{l}, curF] = mex_fillOneLevel( curF, pyI{l}, pyM{l}, D, l, useLineConstr, numiter );
-    [pyI{l}, curF] = mex_fillOneLevel_withline( curF, pyI{l}, pyM{l}, [], D, l, linesPyr{l}, numiter, params );
+    [retI, curF] = mex_fillOneLevel_withline( curF, pyI{l}, pyM{l}, [], D, l, linesPyr{l}, numiter, params );
 %     [pyI{l}, curF] = mex_fillOnelevel_wl_shortint( curF, pyI{l}, pyM{l}, [], D, l, linesPyr{l}, numiter, params );
-    curF = ipermute(curF, [3 1 2]); pyI{l} = ipermute(pyI{l}, [3 1 2]);
+    curF = ipermute(curF, [3 1 2]); pyI{l} = im2single(ipermute(retI, [3 1 2]));
+%     curF = ipermute(reshape(curF, [2 size(pyM{l},1) size(pyM{l},2)]), [3 1 2]); 
+%     pyI{l} = ipermute(reshape(pyI{l}, [3 size(pyM{l},1) size(pyM{l},2)]), [3 1 2]);
 
     toc
     fprintf('level %d end\n', l);
