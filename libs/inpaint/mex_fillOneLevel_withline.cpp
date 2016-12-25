@@ -59,7 +59,7 @@ int		RSRounds = 3;
 float alphaSp = .005, alphaAp = 0.5, alphaStr = 1 - alphaSp - alphaAp;
 float cs_imp = 1, cs_rad = 1;
 float kappa = MAX(R, C); // I have no idea how to set this thing...
-const float TOL = 10; // for convergence
+const float TOL = 1e-2; // for convergence
 
 void getLines(const mxArray* plines) {
 	nlines = mxGetNumberOfElements(plines);
@@ -140,9 +140,11 @@ void getBegEnd() {
 	printf("(%d, %d)->(%d, %d), nnzMask = %d\n", Rbeg, Cbeg, Rend, Cend, nnzMask);
 }
 
+// relative convergence criterion
 inline bool checkConvergence(float a, float b) {
-	//return sq(a - b) < TOL;
-	return false;
+	
+	double x = MAX(a, b), y = MIN(a,b);
+	return (x - y) / x < TOL;
 }
 
 // main procedure
@@ -183,11 +185,7 @@ void fillOneLevel(int* initf, imdata* I, const bool* M, float* D, int level, lin
 						// propagate forward
 						fijOld = getFij(i, j);
 						costOld = calcTotalCost(i, j, fijOld);
-						if (costOld < prevAvgCost) { // loss小就不搜索！！！
-							currCost += costOld;
-							continue;
-						}
-						calcedPx++;
+
 						costLeft = 1e10;
 						costUp = 1e10;
 						fijLeft = getFij(i, j - 1) + fij(0, 1);
@@ -208,7 +206,13 @@ void fillOneLevel(int* initf, imdata* I, const bool* M, float* D, int level, lin
 						else if (costLeft < costOld) {
 							costOld = costLeft;
 							setFij(i, j, fijLeft);
+						}						
+						
+						if (costOld < prevAvgCost) { // loss小就不搜索！！！
+							currCost += costOld;
+							continue;
 						}
+						calcedPx++;
 						//random search
 						drs = wrs*rrs;
 						srand((unsigned)time(NULL));
@@ -254,11 +258,7 @@ void fillOneLevel(int* initf, imdata* I, const bool* M, float* D, int level, lin
 						// propagate forward
 						fijOld = getFij(i, j);
 						costOld = calcTotalCost(i, j, fijOld);
-						if (costOld < prevAvgCost) {
-							currCost += costOld;
-							continue;
-						}
-						calcedPx++;
+
 						costRight = 1e10;
 						costDown = 1e10;
 						fijRight = getFij(i, j + 1) - fij(0, 1);
@@ -280,6 +280,11 @@ void fillOneLevel(int* initf, imdata* I, const bool* M, float* D, int level, lin
 							costOld = costRight;
 							setFij(i, j, fijRight);
 						}
+						if (costOld < prevAvgCost) {
+							currCost += costOld;
+							continue;
+						}
+						calcedPx++;
 						//random search
 						drs = wrs*rrs;
 						srand((unsigned)time(NULL));
@@ -382,23 +387,19 @@ float calcAppearanceCost(int i, int j, fij ff) {
 	int r_begin = MAX(i - 2, 0), r_end = MIN(i + 2, R - 1);
 	int c_begin = MAX(j - 2, 0), c_end = MIN(j + 2, C - 1);
 	int r, c, cnt = 0;
-	imdata i1[3] = {}, i2[3] = {};
+	//imdata i1[3] = {}, i2[3] = {};
 	for (c = c_begin; c <= c_end; ++c) {
 		for (r = r_begin; r <= r_end; ++r) {
 			fij v(r - i, c - j), fv = ff + v;
-			for (int k = 0; k < 3; ++k) {
-				i1[k] = im[HH(r, c, k, 3)];
-			}
-			if (isValid(fv)) {
-				for (int k = 0; k < 3; ++k) {
-					//i2[k] = im[HH(fv[0], fv[1], k, 3)];
-					apc += sq((int)(i1[k] - im[HH(fv[0], fv[1], k, 3)]));
-				}
-			}
-			else {
+			if (!isValid(fv)) {
 				apc = apc + 190000;
 				continue;
 			}
+			for (int k = 0; k < 3; ++k) {
+				//i2[k] = im[HH(fv[0], fv[1], k, 3)];
+				apc += sq((int)(im[HH(r, c, k, 3)] - im[HH(fv[0], fv[1], k, 3)]));
+			}
+
 			//apc = apc + (i1[0] - i2[0])*(i1[0] - i2[0]) +
 				//(i1[1] - i2[1])*(i1[1] - i2[1]) + (i1[2] - i2[2])*(i1[2] - i2[2]);
 			cnt++;
@@ -456,7 +457,7 @@ float calcSumTotalCost() {
 	}
 	//printf("total spc = %lf, total apc = %lf, total strc = %lf\n", sumspc, sumapc, sumstr);
 	float ret = sumspc*alphaSp + sumapc*alphaAp + sumstr*alphaStr;
-	//printf("total cost = %lf, total spc = %lf, total apc = %lf, total strc = %lf\n", ret, sumspc, sumapc, sumstr);
+	printf("total cost = %lf, total spc = %lf, total apc = %lf, total strc = %lf\n", ret, sumspc, sumapc, sumstr);
 	printf("avg px cost = %lf\n", ret / nnzMask);
 	return ret;
 }
