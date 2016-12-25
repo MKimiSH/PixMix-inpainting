@@ -8,7 +8,7 @@ function [pyI,F] = fillImagePyr_withmex_old(pyI, pyM, useLineConstr)
 t1 = tic;
 L = length(pyM);
 curF = [];
-numitertop = floor((linspace(50, 80, L)));
+numitertop = floor((linspace(200, 40, L)));
 params.alphaSp = 0.025;
 params.alphaAp = 0.25;
 params.cs_imp = 1;
@@ -33,12 +33,13 @@ for l = 1:L
     D = single(bwdist(~pyM{l}));
     curF = int32(curF);
     numiter = int32(numitertop(l));
+    
+    curF = permute(curF, [3 1 2]); pyI{l} = permute(pyI{l}, [3 1 2]);
 %     [pyI{l}, curF] = mex_fillOneLevel( curF, pyI{l}, pyM{l}, D, l, useLineConstr, numiter );
     [pyI{l}, curF] = mex_fillOneLevel_withline( curF, pyI{l}, pyM{l}, [], D, l, linesPyr{l}, numiter, params );
-%     if(mod(l,2)==1 && l<L)
-%         showF(pyI{l}, pyM{l}, curF);
-%     end
-%     showF(pyI{l}, pyM{l}, curF);
+%     [pyI{l}, curF] = mex_fillOnelevel_wl_shortint( curF, pyI{l}, pyM{l}, [], D, l, linesPyr{l}, numiter, params );
+    curF = ipermute(curF, [3 1 2]); pyI{l} = ipermute(pyI{l}, [3 1 2]);
+
     toc
     fprintf('level %d end\n', l);
 end

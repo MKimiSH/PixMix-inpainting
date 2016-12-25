@@ -13,7 +13,7 @@ function [I, F, C, H, OF] = inpaintSecondFrame(I, lastI, lastF, lastM, lastC, OF
 [H, C, M, OF] = object_tracking(lastI, I, 0, lastC, OF);
 %% Pt. 2
 [refI, initF] = forwardF(I, M, lastI, lastF, lastM, H);
-refI = lightnessAdjust(refI, C, lastI, lastC);
+refI = lightnessAdjust(refI, M, C, lastI, lastC);
 %% Pt. 3
 [I, F] = fillSecondImage(I, M, initF, refI);
 

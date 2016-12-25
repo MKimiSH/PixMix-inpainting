@@ -43,9 +43,9 @@ typedef struct linestr {
 line *lines;
 int nlines;
 // Function Declarations
-void fillOneLevel(int* initf, float* I, const bool* M, float* D, int level, line*, int);
+void fillOneLevel(short* initf, float* I, const bool* M, float* D, int level, line*, int);
 
-int		*f;
+short	*f;
 float	*im;
 bool	*mask;
 bool	*numask;
@@ -142,7 +142,7 @@ inline bool checkConvergence(float a, float b) {
 }
 
 // main procedure
-void fillOneLevel(int* initf, float* I, const bool* M, float* D, int level, line* Lines, int iternum) {
+void fillOneLevel(short* initf, float* I, const bool* M, float* D, int level, line* Lines, int iternum) {
 	printf("Entering fillOneLevel\n");
 	float wrs = .5;
 	int rrs = MAX(R, C);
@@ -484,7 +484,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 	// input
 	printf("???\n");
-	int*	initf = (int*)mxGetData(INITF);
+	short*	initf = (short*)mxGetData(INITF);
 	float*	I = (float*)mxGetData(INI);
 	printf("??????\n");
 	bool*	M = (bool*)mxGetData(INM);
@@ -513,8 +513,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	float*	filledI = (float*)mxGetPr(FILLEDI);
 
 	const int dim2[3] = { R,C,2 };
-	RETF = mxCreateNumericArray(3, dim2, mxINT32_CLASS, mxREAL);
-	int*	retf = (int*)mxGetPr(RETF);
+	RETF = mxCreateNumericArray(3, dim2, mxINT16_CLASS, mxREAL);
+	short*	retf = (short*)mxGetPr(RETF);
 
 	// global variables
 
@@ -561,7 +561,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	}
 
 	memcpy(filledI, im, sizeof(float)*R*C * 3);
-	memcpy(retf, f, sizeof(int)*R*C * 2);
+	memcpy(retf, f, sizeof(short)*R*C * 2);
 	if (lines)
 		delete [] lines;
 
