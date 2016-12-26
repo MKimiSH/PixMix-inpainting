@@ -55,7 +55,7 @@ bool	*mask;
 mxArray *linesptr;
 int		R = 0, C = 0;
 int		Rbeg, Cbeg, Rend, Cend, nnzMask;
-int		RSRounds = 3;
+int		RSRounds = 6;
 float alphaSp = .005, alphaAp = 0.5, alphaAddt = 1 - alphaSp - alphaAp;//alphaStr = 1 - alphaSp - alphaAp;
 float cs_imp = 1, cs_rad = 1; // unused
 float kappa = MAX(R, C); // unused
@@ -487,12 +487,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 
 	//FILLEDI = mxCreateNumericMatrix(R*C * 3, 1, mxSINGLE_CLASS, mxREAL);
-	const int dim3[3] = { R, C, 3 };
+	const int dim3[3] = { 3, R, C };
 	//int* ddd = dim3;
-	FILLEDI = mxCreateNumericArray(3, dim3, mxSINGLE_CLASS, mxREAL);
+	FILLEDI = mxCreateNumericArray(3, dim3, mxUINT8_CLASS, mxREAL);
 	imdata*	filledI = (imdata*)mxGetPr(FILLEDI);
 
-	const int dim2[3] = { R,C,2 };
+	const int dim2[3] = { 2, R,C };
 	RETF = mxCreateNumericArray(3, dim2, mxINT32_CLASS, mxREAL);
 	int*	retf = (int*)mxGetPr(RETF);
 
@@ -502,7 +502,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	im = I;
 	refim = rI;
 	mask = M;
-
+	getBegEnd();
 	//for (int i = 0; i < R; ++i) {
 	//	for (int j = 0; j < C; ++j) {
 	//		printf("%d ", initf[i * 2 + j*R * 2]);

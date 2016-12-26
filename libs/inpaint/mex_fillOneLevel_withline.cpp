@@ -52,7 +52,7 @@ bool	*numask;
 mxArray *linesptr;
 int		R = 0, C = 0;
 int		Rbeg, Cbeg, Rend, Cend, nnzMask, nnzNUMask;
-int		RSRounds = 3;
+int		RSRounds = 6;
 float alphaSp = .005, alphaAp = 0.5, alphaStr = 1 - alphaSp - alphaAp;
 float cs_imp = 1, cs_rad = 1;
 float kappa = MAX(R, C); // I have no idea how to set this thing...
