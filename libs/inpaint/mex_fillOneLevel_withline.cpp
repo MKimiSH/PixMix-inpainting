@@ -1,7 +1,6 @@
 #include"inpaint.h"
 
 
-
 void getLines(const mxArray*);
 void getParams(const mxArray*);
 void getBegEnd();
