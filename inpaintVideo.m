@@ -28,7 +28,7 @@ end
 
 %% inpainting!!!
 % call smallst's code to select object and inpaint first frame
-[vid{1}, m0, f0, c0, of0] = inpaintFirstFrame(vid{1}, M0, UM0, usrlines, C0);
+[vid{1}, m0, f0, c0, of0, ofobj] = inpaintFirstFrame(vid{1}, M0, UM0, usrlines, C0);
 
 % Call zhangyu's code to track object, and then forward _f_ to get result
 % for second frame
@@ -38,7 +38,7 @@ c = c0;
 m = m0;
 H = [];
 for i=2:timeSpan
-    [vid{i}, f, c, H, of] = inpaintSecondFrame(vid{i}, vid{i-1}, f, m, c, of);
+    [vid{i}, f, c, H, of, ofobj] = inpaintSecondFrame(vid{i}, vid{i-1}, f, m, c, of, ofobj);
 end
 
 %% write video

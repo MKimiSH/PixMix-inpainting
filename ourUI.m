@@ -77,7 +77,8 @@ start = uicontrol('String', 'start', 'Enable', 'off',...
     end
     function mystart(hObject, eventdata)
         se = strel('disk',4);
-        fres = maxLianTongYu_smallst(imclose(detect_obj_smallst(startFrame, Landmarks),se));   
+        fres = maxLianTongYu_smallst(imclose(detect_obj_smallst(startFrame, Landmarks),se));  
+        fres = imdilate(fres, strel('disk', 5));
         this_boundary = edge(fres, 'sobel'); % first frame boundary
         [h,w] = size(fres);
         [x,y] = meshgrid(1:w, 1:h);
