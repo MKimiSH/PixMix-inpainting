@@ -1,8 +1,6 @@
 #include"inpaint.h"
 
 
-typedef uint8_t imdata;
-typedef uint16_t fdata;
 
 void getLines(const mxArray*);
 void getParams(const mxArray*);

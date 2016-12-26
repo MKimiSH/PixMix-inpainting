@@ -1,4 +1,4 @@
-function [I, F, C, OF] = inpaintFirstFrame(I)
+function [I, M, F, C, OF] = inpaintFirstFrame(I)
 % inpaint an image _I_ from scratch
 OF = object_tracking([], I, 1, [], []); % initialize OF
 

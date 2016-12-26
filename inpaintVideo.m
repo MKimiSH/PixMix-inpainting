@@ -28,18 +28,23 @@ end
 
 %% inpainting!!!
 % call smallst's code to select object and inpaint first frame
-[vid{1}, f0, contour] = inpaintFirstFrame(vid{1});
+[vid{1}, m0, f0, c0, of0] = inpaintFirstFrame(vid{1});
 
 % Call zhangyu's code to track object, and then forward _f_ to get result
 % for second frame
 f = f0;
-oflow = [];
+of = of0;
+c = c0;
+m = m0;
 H = [];
 for i=2:timeSpan
-    [vid{i}, f, contour, H, oflow] = inpaintSecondFrame(vid{i}, vid{i-1}, f, oflow);
+    [vid{i}, f, c, H, of] = inpaintSecondFrame(vid{i}, vid{i-1}, f, m, c, of);
 end
 
 %% write video
+if nargin==1
+    outname = 'ret.mp4';
+end
 v = VideoWriter(outname, 'MPEG-4');
 open(v);
 v.FrameRate = vidObj.FrameRate;

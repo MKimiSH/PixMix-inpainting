@@ -6,10 +6,6 @@ function [refI, initF] = forwardF(I, M, lI, lF, lM, H)
 [R, C] = size(lM);
 assert(R == size(M,1) && C == size(M,2));
 
-% lind = find(lM>0);
-% lfr = lF(lind); % lastF, row mapping
-% lfc = lF(lind + R*C);
-
 [crow, ccol] = find(M>0);
 cn = length(crow);
 %% reverse transform to lI
