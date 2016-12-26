@@ -104,7 +104,7 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     matchedPoints1 = imagePoints1(validIdx, :);  
     matchedPoints2 = imagePoints2(validIdx, :);  
     
-    [tform, ~, ~, status] = estimateGeometricTransform(matchedPoints1,matchedPoints2,'projective');
+    [tform, ~, ~, ~] = estimateGeometricTransform(matchedPoints1,matchedPoints2,'projective');
     
 
     %% 根据投影变换H，上一帧的boundary位置，估计这一帧的boundary位置
