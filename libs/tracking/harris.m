@@ -16,7 +16,7 @@ function [corner_list] = harris(varargin)
     %% 处理变长输入
     input_var_length = length(varargin);
     if input_var_length == 0
-        'error'
+        warning('error');
     else %input_var_length >=1
         img = varargin{1};
         candidate_list = []; %candidate_list = []时认为没有candidate约束,全局检查
