@@ -11,7 +11,7 @@ global v;
 switch(action)
   case 'start'
    %axis([0 size(snooker,1) 0 size(snooker,2)]);% 设定图轴范围
-  % box on;% 将图轴加上图�?
+  % box on;% 将图轴加上图�?
    %title('Click and drag your mouse in this window!');
    set(gcf, 'WindowButtonDownFcn', 'tmouse_smallst down');
   case 'down'
@@ -32,14 +32,16 @@ switch(action)
    landmarks = unique(landmarks, 'rows', 'stable');
    se = strel('disk',4);
    fres = maxLianTongYu_smallst(imclose(detect_obj_smallst(snooker, landmarks),se));   
+   
+   %fres = fres(1:25:end,1:25:end);
+   
    this_boundary = edge(fres, 'sobel');
    
-   size(fres)
    
    last_frame = im2uint8(rgb2gray(snooker));
    %snooker = last_frame;
-   snooker = im2uint8(rgb2gray(readFrame(v)));
-   snooker = snooker(1:2:end,1:2:end);
+   %snooker = im2uint8(rgb2gray(readFrame(v)));
+   %snooker = snooker(1:2:end,1:2:end);
    
    i = 0;
    [H,this_boundary,opticalFlow,~,~] = object_tracking(last_frame,snooker,true,this_boundary,[]);
@@ -52,23 +54,21 @@ switch(action)
       last_frame = snooker;
       
       snooker = im2uint8(rgb2gray(readFrame(v)));
-      snooker = snooker(1:2:end,1:2:end);
+      %snooker = snooker(1:2:end,1:2:end);
       
-      last_boundary = this_boundary;
       
-      [H,this_boundary,opticalFlow,last_corner_list,flow] = object_tracking(last_frame,snooker,false,this_boundary,opticalFlow);
-      
-      change = isequal(last_boundary, this_boundary)
+      [H,this_boundary,opticalFlow,last_corner_list,estimated_corner_list,flow] = object_tracking(last_frame,snooker,false,this_boundary,opticalFlow);
       
       this_corner_list = harris(snooker);
       this_boundary_list = matrix2list(this_boundary,1);
       
-      display = insertMarker(snooker, fliplr(last_corner_list), '+','color','blue');
-      display = insertMarker(display, fliplr(this_corner_list), '+','color','red');
+      display = insertMarker(snooker, fliplr(last_corner_list), '+','color','yellow');
+      display = insertMarker(display, fliplr(estimated_corner_list), 'circle','color','yellow');
+      %display = insertMarker(display, fliplr(this_corner_list), '+','color','red');
       display = insertMarker(display, fliplr(this_boundary_list), '+','color','green');
       imshow(display);
       hold on
-      plot(flow,'DecimationFactor',[1 1],'ScaleFactor',10)
+      plot(flow,'DecimationFactor',[8 8],'ScaleFactor',800)
       
       figure
    end
