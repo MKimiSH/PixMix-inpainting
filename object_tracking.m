@@ -19,7 +19,9 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
         return
     end
     
-    %% 
+%{    
+    
+    %%
     
     uint8_last_frame = im2uint8(rgb2gray(last_frame));
     [img_height,img_width] = size(uint8_this_frame);
@@ -106,7 +108,8 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
         this_boundary = last_boundary;
         return
     end
-    
+
+%}
     %% 使用vision.PointTracker找两帧之间的变换关系
     
     %初始化vision.PointTracker
