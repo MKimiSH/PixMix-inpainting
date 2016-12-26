@@ -1,6 +1,6 @@
 function [I, M, F, C, OF, OFobj] = inpaintFirstFrame(I, M, nouseM, usrLn, C)
 % inpaint an image _I_ from scratch
-[~, ~, OFobj, ~, ~, OF] = object_tracking([], I, 1, [], []); % initialize OF
+[~, ~, OFobj, ~, ~, OF] = object_tracking_novec([], I, 1, C, []); % initialize OF
 
 I = im2single(I);
 

@@ -41,6 +41,6 @@ lastind = sub2ind(size(warpLI), lastrow, lastcol);
 refI(cind) = warpLI(lastind);
 refI(cind + R*C) = warpLI(lastind + WR*WC);
 refI(cind + 2*R*C) = warpLI(lastind + 2*WR*WC);
-figure, imshow(refI);
+% figure, imshow(refI);
 
 end
