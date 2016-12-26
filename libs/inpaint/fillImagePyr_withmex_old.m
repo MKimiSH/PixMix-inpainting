@@ -43,6 +43,7 @@ for l = 1:L
 %     pyI{l} = ipermute(reshape(pyI{l}, [3 size(pyM{l},1) size(pyM{l},2)]), [3 1 2]);
 
     toc
+    
     fprintf('level %d end\n', l);
 end
 % showF(pyI{l}, pyM{l}, curF);

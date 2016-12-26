@@ -3,6 +3,7 @@
 
 //void getLines(const mxArray*);
 void getParams(const mxArray*);
+void getBegEnd();
 
 void fillIWithF();
 float calcTotalCost(int, int, fij);
@@ -42,20 +43,23 @@ typedef struct linestr {
 
 //line *lines;
 //int nlines;
+
 // Function Declarations
-void fillOneLevel(int*, float*, const bool*, float*, float*, line*, int);
+void fillOneLevel(int*, imdata*, const bool*, float*, imdata*, line*, int);
 
 int		*f;
-float	*im;
-float	*refim;
+imdata	*im;
+imdata	*refim;
 bool	*mask;
 //bool	*numask;
 mxArray *linesptr;
 int		R = 0, C = 0;
+int		Rbeg, Cbeg, Rend, Cend, nnzMask;
+int		RSRounds = 3;
 float alphaSp = .005, alphaAp = 0.5, alphaAddt = 1 - alphaSp - alphaAp;//alphaStr = 1 - alphaSp - alphaAp;
 float cs_imp = 1, cs_rad = 1; // unused
 float kappa = MAX(R, C); // unused
-const float TOL = 10; // for convergence
+const float TOL = 1e-2; // for convergence
 
 
 void getParams(const mxArray* pparams) {
@@ -92,13 +96,34 @@ void getParams(const mxArray* pparams) {
 }
 
 
+// 当然可以再快一些，先这样吧
+void getBegEnd() {
+	//Rbeg = Cbeg = 0; Rend = R - 1; Cend = C - 1; return;
+	Rbeg = Cbeg = MAX(R, C);
+	Rend = Cend = nnzMask = 0;
+	for (int j = 0; j < C; ++j) {
+		for (int i = 0; i < R; ++i) {
+			if (isMask(i, j)) {
+				nnzMask++;
+				if (Rbeg > i)Rbeg = i;
+				if (Cbeg > j)Cbeg = j;
+				if (Rend < i)Rend = i;
+				if (Cend < j)Cend = j;
+			}
+		}
+	}
+	printf("(%d, %d)->(%d, %d), nnzMask = %d\n", Rbeg, Cbeg, Rend, Cend, nnzMask);
+}
+
+// relative convergence criterion
 inline bool checkConvergence(float a, float b) {
-	//return sq(a - b) < TOL;
-	return false;
+
+	double x = MAX(a, b), y = MIN(a, b);
+	return (x - y) / x < TOL;
 }
 
 // main procedure
-void fillOneLevel(int* initf, float* I, const bool* M, float* D, float* refI, line* Lines, int iternum) {
+void fillOneLevel(int* initf, imdata* I, const bool* M, float* D, imdata* refI, line* Lines, int iternum) {
 	printf("Entering fillSecondImage\n");
 	float wrs = .5;
 	int rrs = MAX(R, C);
@@ -107,16 +132,20 @@ void fillOneLevel(int* initf, float* I, const bool* M, float* D, float* refI, li
 	// fill the image with initial guess of f
 	//fillIwithF();
 
+
 	// propagation and random search
 	int numIter = iternum;
-	float prevCost = 1e20, currCost = 0;
+	double prevCost = 1e20, currCost = 0;
 	for (int it = 0; it<numIter; ++it) {
 		fillIWithF();
-		calcSumTotalCost();
+		currCost = calcSumTotalCost();
 		if (checkConvergence(prevCost, currCost)) {
 			printf("converged before iteration %d\n", it);
 			return;
 		}
+		float prevAvgCost = currCost / nnzMask;
+		int calcedPx = 0;
+		prevAvgCost *= 1.2;
 		prevCost = currCost;
 		currCost = 0;
 		//printf("begin propagation and search.\n");
@@ -126,14 +155,15 @@ void fillOneLevel(int* initf, float* I, const bool* M, float* D, float* refI, li
 			//float spcOld, spcLeft, spcUp;
 			//float apcOld, apcLeft, apcUp;
 			float drs, spcRS, apcRS, costRS;
-			for (i = 0; i < R; ++i) {
-				for (j = 0; j < C; ++j) {
+			for (i = Rbeg; i <= Rend; ++i) {
+				for (j = Cbeg; j <= Cend; ++j) {
 					if (isMask(i, j)) {
 						// propagate forward
 						fijOld = getFij(i, j);
+						costOld = calcTotalCost(i, j, fijOld);
+
 						costLeft = 1e10;
 						costUp = 1e10;
-						costOld = calcTotalCost(i, j, fijOld);
 						fijLeft = getFij(i, j - 1) + fij(0, 1);
 						fijUp = getFij(i - 1, j) + fij(1, 0);
 						if (isMask(i, j - 1) && isValid(fijLeft))
@@ -153,27 +183,36 @@ void fillOneLevel(int* initf, float* I, const bool* M, float* D, float* refI, li
 							costOld = costLeft;
 							setFij(i, j, fijLeft);
 						}
+
+						if (costOld < prevAvgCost) { // loss小就不搜索！！！
+							currCost += costOld;
+							continue;
+						}
+						calcedPx++;
 						//random search
 						drs = wrs*rrs;
 						srand((unsigned)time(NULL));
 						fijOld = getFij(i, j);
-						while (drs>D[GG(i, j)] + 3) {
-							fijRS = randFij(fijOld[0], fijOld[1], drs);
-							// should search with center f(i,j) rather than(i,j)
-							costRS = 1e10;
-							int numTol = 3;
-							while (!isValid(fijRS) && numTol > 0) {
+						bool found = false;
+						while (drs>D[GG(i, j)] + 2 && !found) {
+							int thisRound = RSRounds;
+							while (!found && thisRound--) {
 								fijRS = randFij(fijOld[0], fijOld[1], drs);
-								numTol--;
-							}
-							if (numTol <= 0) {
-								continue;
-							}
-							costRS = calcTotalCost(i, j, fijRS);
-							if (costRS < costOld) {
-								setFij(i, j, fijRS);
-								costOld = costRS;
-								break;
+								// should search with center f(i,j) rather than(i,j)
+								costRS = 1e10;
+								int numTol = 3;
+								while (!isValid(fijRS) && numTol--) {
+									fijRS = randFij(fijOld[0], fijOld[1], drs);
+								}
+								if (numTol <= 0) {
+									continue;
+								}
+								costRS = calcTotalCost(i, j, fijRS);
+								if (costRS < costOld) {
+									setFij(i, j, fijRS);
+									costOld = costRS;
+									break;
+								}
 							}
 							drs *= wrs;
 						}
@@ -181,7 +220,7 @@ void fillOneLevel(int* initf, float* I, const bool* M, float* D, float* refI, li
 					}
 				}
 			}
-
+			printf("%d pixels updated\n", calcedPx);
 		}
 		else {
 			fij fijOld, fijRight, fijDown, fijRS;
@@ -189,14 +228,15 @@ void fillOneLevel(int* initf, float* I, const bool* M, float* D, float* refI, li
 			//float spcOld, spcRight, spcDown;
 			//float apcOld, apcRight, apcDown;
 			float drs, spcRS, apcRS, costRS;
-			for (j = C - 1; j >= 0; --j) {
-				for (i = R - 1; i >= 0; --i) {
+			for (j = Cend; j >= Cbeg; --j) {
+				for (i = Rend; i >= Rbeg; --i) {
 					if (isMask(i, j)) {
 						// propagate forward
 						fijOld = getFij(i, j);
+						costOld = calcTotalCost(i, j, fijOld);
+
 						costRight = 1e10;
 						costDown = 1e10;
-						costOld = calcTotalCost(i, j, fijOld);
 						fijRight = getFij(i, j + 1) - fij(0, 1);
 						fijDown = getFij(i + 1, j) - fij(1, 0);
 						if (isMask(i, j + 1) && isValid(fijRight))
@@ -216,27 +256,35 @@ void fillOneLevel(int* initf, float* I, const bool* M, float* D, float* refI, li
 							costOld = costRight;
 							setFij(i, j, fijRight);
 						}
+						if (costOld < prevAvgCost) {
+							currCost += costOld;
+							continue;
+						}
+						calcedPx++;
 						//random search
 						drs = wrs*rrs;
 						srand((unsigned)time(NULL));
 						fijOld = getFij(i, j);
-
-						while (drs>D[GG(i, j)] + 3) {
-							fijRS = randFij(fijOld[0], fijOld[1], drs);
-							costRS = 1e10;
-							int numTol = 3;
-							while (!isValid(fijRS) && numTol > 0) {
+						bool found = false;
+						while (drs>D[GG(i, j)] + 2 && !found) {
+							int thisRound = RSRounds;
+							while (!found && thisRound--) {
 								fijRS = randFij(fijOld[0], fijOld[1], drs);
-								numTol--;
-							}
-							if (numTol <= 0) {
-								continue;
-							}
-							costRS = calcTotalCost(i, j, fijRS);
-							if (costRS < costOld) {
-								setFij(i, j, fijRS);
-								costOld = costRS;
-								break;
+								// should search with center f(i,j) rather than(i,j)
+								costRS = 1e10;
+								int numTol = 3;
+								while (!isValid(fijRS) && numTol--) {
+									fijRS = randFij(fijOld[0], fijOld[1], drs);
+								}
+								if (numTol <= 0) {
+									continue;
+								}
+								costRS = calcTotalCost(i, j, fijRS);
+								if (costRS < costOld) {
+									setFij(i, j, fijRS);
+									costOld = costRS;
+									break;
+								}
 							}
 							drs *= wrs;
 						}
@@ -244,10 +292,10 @@ void fillOneLevel(int* initf, float* I, const bool* M, float* D, float* refI, li
 					}
 				}
 			}
+			printf("%d pixels updated\n", calcedPx);
 		}
 		//printf("end propagation and search.\n");
 	}
-
 
 
 }
@@ -285,7 +333,7 @@ float calcTotalCost(int i, int j, fij ff) {
 // calculate cost_spatial using 8-neighbor
 // seemingly, the neighbor pixel which is out of the mask should not be considered
 float calcSpatialCost(int i, int j, fij ff) {
-	float spc = 0;
+	int spc = 0;
 	float w = 0.125;
 	int maxdist = MAX(R, C) / 2; // this should be like this way...
 	float tao = maxdist*maxdist;
@@ -301,46 +349,46 @@ float calcSpatialCost(int i, int j, fij ff) {
 			cnt++;
 		}
 	}
-	spc = spc*w / cnt;
-	return spc;
+
+	return (double)spc * w / cnt;
 }
 
 //calculate cost_appear using 5x5 patch
 float calcAppearanceCost(int i, int j, fij ff) {
 
-	float apc = 0;
+	int apc = 0;
 	float w = 1.0 / 25;
 	int r_begin = MAX(i - 2, 0), r_end = MIN(i + 2, R - 1);
 	int c_begin = MAX(j - 2, 0), c_end = MIN(j + 2, C - 1);
 	int r, c, cnt = 0;
-	float i1[3] = {}, i2[3] = {};
-	for (r = r_begin; r <= r_end; ++r) {
-		for (c = c_begin; c <= c_end; ++c) {
+	//imdata i1[3] = {}, i2[3] = {};
+	for (c = c_begin; c <= c_end; ++c) {
+		for (r = r_begin; r <= r_end; ++r) {
 			fij v(r - i, c - j), fv = ff + v;
+			if (!isValid(fv)) {
+				apc = apc + 190000;
+				continue;
+			}
 			for (int k = 0; k < 3; ++k) {
-				i1[k] = im[HH(r, c, k, 3)];
+				//i2[k] = im[HH(fv[0], fv[1], k, 3)];
+				apc += sq((int)(im[HH(r, c, k, 3)] - im[HH(fv[0], fv[1], k, 3)]));
 			}
-			if (isValid(fv)) {
-				for (int k = 0; k < 3; ++k) {
-					i2[k] = im[HH(fv[0], fv[1], k, 3)];
-				}
-			}
-			apc = apc + (i1[0] - i2[0])*(i1[0] - i2[0]) +
-				(i1[1] - i2[1])*(i1[1] - i2[1]) + (i1[2] - i2[2])*(i1[2] - i2[2]);
+
+			//apc = apc + (i1[0] - i2[0])*(i1[0] - i2[0]) +
+			//(i1[1] - i2[1])*(i1[1] - i2[1]) + (i1[2] - i2[2])*(i1[2] - i2[2]);
 			cnt++;
 		}
 	}
-	apc = apc*w;
-	return apc * 255 / cnt; // 8-bit grayscale, [0,1] is too small...compared to spc..
+	return (double)apc*w / cnt / 255; // 8-bit grayscale, [0,1] is too small...compared to spc..
 }
 
 float calcAdditionalAppCost(int i, int j, fij ff) {
-	float addtc = 0;
+	int addtc = 0;
 	float w = 1.0 / 25;
 	int r_begin = MAX(i - 2, 0), r_end = MIN(i + 2, R - 1);
 	int c_begin = MAX(j - 2, 0), c_end = MIN(j + 2, C - 1);
 	int r, c, cnt = 0;
-	float i1[3] = {}, i2[3] = {};
+	int i1[3] = {}, i2[3] = {};
 	for (r = r_begin; r <= r_end; ++r) {
 		for (c = c_begin; c <= c_end; ++c) {
 			fij v(r - i, c - j), fv = ff + v;
@@ -352,8 +400,8 @@ float calcAdditionalAppCost(int i, int j, fij ff) {
 			cnt++;
 		}
 	}
-	addtc = addtc * w;
-	return addtc * 255 / cnt; // 8-bit grayscale, [0,1] is too small...compared to spc..
+	//addtc = addtc * w;
+	return (double)addtc*w / cnt; // 8-bit grayscale, [0,1] is too small...compared to spc..
 }
 
 float calcSumTotalCost() {
@@ -371,6 +419,7 @@ float calcSumTotalCost() {
 	//printf("total spc = %lf, total apc = %lf, total strc = %lf\n", sumspc, sumapc, sumstr);
 	float ret = sumspc*alphaSp + sumapc*alphaAp + sumaddtc*alphaAddt;//sumstr*alphaStr;
 	printf("total cost = %lf, total spc = %lf, total apc = %lf, total addtc = %lf\n", ret, sumspc, sumapc, sumaddtc);
+	printf("avg px cost = %lf\n", ret / nnzMask);
 	return ret;
 }
 
@@ -424,10 +473,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// input
 	printf("???\n");
 	int*	initf = (int*)mxGetData(INITF);
-	float*	I = (float*)mxGetData(INI);
+	imdata*	I = (imdata*)mxGetData(INI);
 	bool*	M = (bool*)mxGetData(INM);
 	float*	D = (float*)mxGetData(IND);
-	float*	rI = (float*)mxGetData(INREFI);
+	imdata*	rI = (imdata*)mxGetData(INREFI);
 
 	R = mxGetM(INM);
 	C = mxGetN(INM);
@@ -441,7 +490,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	const int dim3[3] = { R, C, 3 };
 	//int* ddd = dim3;
 	FILLEDI = mxCreateNumericArray(3, dim3, mxSINGLE_CLASS, mxREAL);
-	float*	filledI = (float*)mxGetPr(FILLEDI);
+	imdata*	filledI = (imdata*)mxGetPr(FILLEDI);
 
 	const int dim2[3] = { R,C,2 };
 	RETF = mxCreateNumericArray(3, dim2, mxINT32_CLASS, mxREAL);
@@ -491,7 +540,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		//printf("\n");
 	}
 
-	memcpy(filledI, im, sizeof(float)*R*C * 3);
+	memcpy(filledI, im, sizeof(imdata)*R*C * 3);
 	memcpy(retf, f, sizeof(int)*R*C * 2);
 
 	return;

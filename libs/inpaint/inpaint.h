@@ -26,8 +26,8 @@
 #define sind(x) (sin(fmod((x),360) * M_PI / 180))
 #define cosd(x) (cos(fmod((x),360) * M_PI / 180))
 #define sq(x) ((x)*(x))
-#define uint8 uint8_t
-
+typedef uint8_t imdata;
+typedef uint16_t fdata;
 
 class fij {
 private:
