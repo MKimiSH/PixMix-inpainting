@@ -9,7 +9,7 @@ nlines = length(pyLines{proclvl});
 toplines = pyLines{proclvl};
 
 %% È¥¸öÖØ
-if ~isempty(usrLines)
+if usrLines(1).point1(1)>0
     fac = (proclvl-L);
     nusrln = length(usrLines);
     fprintf('%d lines detected, user added %d lines\n', nlines, nusrln);

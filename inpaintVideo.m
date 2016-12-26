@@ -1,4 +1,4 @@
-function [] = inpaintVideo(vidname, outname)
+function [] = inpaintVideo(vidname, outname, M0, UM0, usrlines, C0)
 % main function of the project, reads a video by _vidname_, opens a GUI for selection,
 % remove the selected object, output the resulting video with _outname_
 
@@ -28,7 +28,7 @@ end
 
 %% inpainting!!!
 % call smallst's code to select object and inpaint first frame
-[vid{1}, m0, f0, c0, of0] = inpaintFirstFrame(vid{1});
+[vid{1}, m0, f0, c0, of0] = inpaintFirstFrame(vid{1}, M0, UM0, usrlines, C0);
 
 % Call zhangyu's code to track object, and then forward _f_ to get result
 % for second frame

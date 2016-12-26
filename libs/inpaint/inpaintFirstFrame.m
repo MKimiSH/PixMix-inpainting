@@ -1,10 +1,10 @@
-function [I, M, F, C, OF] = inpaintFirstFrame(I)
+function [I, M, F, C, OF] = inpaintFirstFrame(I, M, nouseM, usrLn, C)
 % inpaint an image _I_ from scratch
 OF = object_tracking([], I, 1, [], []); % initialize OF
 
 I = im2single(I);
 
-[M, nouseM, usrLn, C] = getConstraintsGUI(I);
+% [M, nouseM, usrLn, C] = getConstraintsGUI(I);
 
 if ~ismatrix(M)
     M = rgb2gray(M);

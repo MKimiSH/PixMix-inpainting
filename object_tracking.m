@@ -2,7 +2,6 @@
 %输出:投影变换H,当前帧边界this_contour,需要维持的全局变量opticalFlow
 function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flow] = object_tracking(last_frame,this_frame,is_first_frame,last_boundary,opticalFlow)
 
-    uint8_last_frame = im2uint8(rgb2gray(last_frame));
     uint8_this_frame = im2uint8(rgb2gray(this_frame));
     
     %% 第一帧进行光流初始化
@@ -21,6 +20,7 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     
     %% 
     
+    uint8_last_frame = im2uint8(rgb2gray(last_frame));
     [img_height,img_width] = size(uint8_this_frame);
 
     %求出上一帧到这一帧的光流

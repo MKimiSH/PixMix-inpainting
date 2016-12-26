@@ -37,6 +37,6 @@ refI(cind) = warpLI(cind);
 refI(cind + R*C) = warpLI(cind + R*C);
 refI(cind + 2*R*C) = warpLI(cind + 2*R*C);
 
-refI = adjustLight(refI, lI, M)
+refI = adjustLight(refI, lI, M);
 
 end
