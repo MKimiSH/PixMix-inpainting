@@ -8,8 +8,8 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     
     if is_first_frame == true 
         %opticalFlow = opticalFlowLKDoG('NumFrames',3);
-        %opticalFlow = opticalFlowFarneback;
-        opticalFlow = opticalFlowHS; %opticalFlowLK在很多地方值都为0
+        opticalFlow = opticalFlowFarneback;
+        %opticalFlow = opticalFlowHS; %opticalFlowLK在很多地方值都为0
         this_corner_list = [];
         estimated_corner_list = [];
         flow = estimateFlow(opticalFlow,uint8_this_frame);
@@ -24,8 +24,6 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     [img_height,img_width] = size(uint8_this_frame);
 
     %求出上一帧到这一帧的光流
-    %opticalFlow = opticalFlowHS;
-    %flow = estimateFlow(opticalFlow,last_frame);
     flow = estimateFlow(opticalFlow,uint8_this_frame);
     
     last_boundary_list = matrix2list(last_boundary,1);
@@ -37,30 +35,55 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     candidate_list = matrix2list(candidate_matrix,1);
     
     %估计投影变换需要至少4对corner,因此要求harris返回上一帧至少4个corner
-    this_corner_list = harris(uint8_this_frame,candidate_list,8); %只搜索candidate中是否有交点
+    this_corner_list = harris(uint8_this_frame,candidate_list,30); %只搜索candidate中是否有交点
     %this_corner_list = harris(this_frame); %所有全局的角点
     
     estimated_corner_list = this_corner_list;%找到的角点根据光流法对应出的这一帧的位置
     [count,~] = size(estimated_corner_list);
+    
+    
     for i = 1:count %计算上一帧的角点按照光流法,这一帧应该到哪了
         this_y = this_corner_list(i,1);
         this_x = this_corner_list(i,2);
        
-        dx = flow.Vx(this_y,this_x);
-        dy = flow.Vy(this_y,this_x);
+        vx = flow.Vx(this_y,this_x);
+        vy = flow.Vy(this_y,this_x);
         
-        this_y = round(this_y+30*dy);
-        this_x = round(this_x+30*dx);
+        min_dist = inf;
+        min_dist_x = 0;
+        min_dist_y = 0;
+        neighborhood = 10;
+        for dx = -neighborhood:neighborhood
+            for dy = -neighborhood:neighborhood
+                if (dx==0) && (dy==0)
+                    continue
+                end
+                
+                tmp_y = this_y + dy;
+                tmp_x = this_x + dx;
+                
+                if (tmp_y <= 0) || (tmp_y > img_height) || (tmp_x <= 0) || (tmp_x > img_width)
+                    continue
+                end
+                
+                tmp_vx = flow.Vx(tmp_y,tmp_x);
+                tmp_vy = flow.Vy(tmp_y,tmp_x);
+                
+                dist = (vx-tmp_vx)^2 + (vy-tmp_vy)^2;
+                if dist < min_dist
+                    min_dist = dist;
+                    min_dist_y = tmp_y;
+                    min_dist_x = tmp_x;
+                end
+            end
+        end
         
-        this_y = max(min(this_y,img_height),1);
-        this_x = max(min(this_x,img_width),1);
-        
-        estimated_corner_list(i,:) = [this_y,this_x];
+        estimated_corner_list(i,:) = [min_dist_y,min_dist_x];
     end
-
+    
     %'similarity'效果不好
-    [tform, ~, ~, status] = estimateGeometricTransform(fliplr(this_corner_list),fliplr(estimated_corner_list),'affine');
-    %[tform, ~, ~, status] = estimateGeometricTransform(fliplr(this_corner_list),fliplr(estimated_corner_list),'projective');
+    %[tform, ~, ~, status] = estimateGeometricTransform(fliplr(this_corner_list),fliplr(estimated_corner_list),'affine');
+    [tform, ~, ~, status] = estimateGeometricTransform(fliplr(this_corner_list),fliplr(estimated_corner_list),'projective');
     if status == 2 %如果估计投影变换时inlier太少，认为两帧之间没有运动
         warning('inlier not enough');
         H = [1,0,0;0,1,0;0,0,1];
@@ -105,16 +128,51 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     
     %this_boundary = imclose(this_boundary,strel('disk',3)); %修整轮廓
     
-%     se = ones(8,8);
-%     this_boundary = imdilate(this_boundary,se);
-%     this_boundary_list = matrix2list(this_boundary,1);
-%     
-%     this_boundary_list_y = this_boundary_list(:,1);
-%     this_boundary_list_x = this_boundary_list(:,2);
-%     
-%     K = convhull(this_boundary_list_x,this_boundary_list_y);
-%     this_boundary_list = [this_boundary_list_y(K),this_boundary_list_x(K)];
-%     
+    se = ones(8,8);
+    this_boundary = imdilate(this_boundary,se);
+    this_boundary_list = matrix2list(this_boundary,1);
+    
+    this_boundary_list_y = this_boundary_list(:,1);
+    this_boundary_list_x = this_boundary_list(:,2);
+    
+    K = convhull(this_boundary_list_x,this_boundary_list_y);
+    this_boundary_list = [this_boundary_list_y(K),this_boundary_list_x(K)];
+    
+    
+    
+    x_list = [];
+    y_list = [];
+    
+    [count,~] = size(this_boundary_list);
+    for i=1:count
+        
+        cur_y = this_boundary_list(i,1);
+        cur_x = this_boundary_list(i,2);
+        if i ~= count
+            next_y = this_boundary_list(i+1,1);
+            next_x = this_boundary_list(i+1,2);
+        else
+            next_y = this_boundary_list(1,1);
+            next_x = this_boundary_list(1,2);
+        end
+        
+        n = max(abs(cur_y-next_y),abs(cur_x-next_x));
+        dy = (next_y - cur_y)/n;
+        dx = (next_x - cur_x)/n;
+            
+        for j=0:n-1
+            tmp_y = round(cur_y + j*dy);
+            tmp_x = round(cur_x + j*dx);
+                
+            x_list(end+1) = tmp_x;
+            y_list(end+1) = tmp_y;
+        end
+            
+    end
+    
+    this_boundary = maxLianTongYu_smallst(imclose(detect_obj_smallst(this_frame, [x_list',y_list']),se)); 
+    this_boundary = edge(this_boundary, 'sobel');
+    
 %     [X,Y] = meshgrid(1:img_height,1:img_width);
 %     
 %     this_boundary = inpolygon(X,Y,this_boundary_list(:,2),this_boundary_list(:,1));

@@ -48,24 +48,22 @@ switch(action)
    while hasFrame(v)
       i = i + 1
       last_frame = this_frame;
-      
       this_frame = readFrame(v);
-      %this_frame = im2uint8(rgb2gray(readFrame(v)));
       %this_frame = this_frame(1:4:end,1:4:end);
       
       [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flow] = object_tracking(last_frame,this_frame,false,this_boundary,opticalFlow);
       this_boundary_list = matrix2list(this_boundary,1);
       
       %Í¼Æ¬±ê¼Ç
-      if i==50
+      %if i==50
           display = insertMarker(this_frame, fliplr(this_corner_list), '+','color','yellow');
           display = insertMarker(display, fliplr(estimated_corner_list), 'circle','color','red');
           display = insertMarker(display, fliplr(this_boundary_list), '+','color','green');
           imshow(display);
           hold on
-          plot(flow,'DecimationFactor',[8 8],'ScaleFactor',800)
+          %plot(flow,'DecimationFactor',[8 8],'ScaleFactor',800)
           figure
-      end
+      %end
    end
    
 end
