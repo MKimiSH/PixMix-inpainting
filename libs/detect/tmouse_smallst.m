@@ -39,8 +39,6 @@ switch(action)
    
    
    last_frame = this_frame;
-   %last_frame = im2uint8(rgb2gray(this_frame));
-   %this_frame = last_frame;
    
    %this_frame = this_frame(1:4:end,1:4:end);
    

@@ -99,6 +99,31 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     end
 
     this_boundary = list2matrix(this_boundary_list,1,img_height,img_width);
+    
+    
+    %%
+    
     %this_boundary = imclose(this_boundary,strel('disk',3)); %ĞŞÕûÂÖÀª
+    
+%     se = ones(8,8);
+%     this_boundary = imdilate(this_boundary,se);
+%     this_boundary_list = matrix2list(this_boundary,1);
+%     
+%     this_boundary_list_y = this_boundary_list(:,1);
+%     this_boundary_list_x = this_boundary_list(:,2);
+%     
+%     K = convhull(this_boundary_list_x,this_boundary_list_y);
+%     this_boundary_list = [this_boundary_list_y(K),this_boundary_list_x(K)];
+%     
+%     [X,Y] = meshgrid(1:img_height,1:img_width);
+%     
+%     this_boundary = inpolygon(X,Y,this_boundary_list(:,2),this_boundary_list(:,1));
+%     this_boundary = edge(this_boundary, 'sobel');
+%     this_boundary_list = matrix2list(this_boundary,1);
+%     
+%     se = strel('disk',4);
+%     this_boundary = maxLianTongYu_smallst(imclose(detect_obj_smallst(this_frame, fliplr(this_boundary_list)),se));   
+%    
+%     this_boundary = edge(this_boundary, 'sobel');
 
 end
