@@ -1,3 +1,5 @@
+%输入:彩色图像img,坐标序列landmarks
+%输出:0,1边界res
 function res = detect_obj_smallst(img, landmarks)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here

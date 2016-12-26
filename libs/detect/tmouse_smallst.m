@@ -38,49 +38,36 @@ switch(action)
    this_boundary = edge(fres, 'sobel');
    
    
-   last_frame = im2uint8(rgb2gray(this_frame));
-   this_frame = last_frame;
-   %this_frame = im2uint8(rgb2gray(readFrame(v)));
+   last_frame = this_frame;
+   %last_frame = im2uint8(rgb2gray(this_frame));
+   %this_frame = last_frame;
+   
    %this_frame = this_frame(1:4:end,1:4:end);
-   
-%    %初始化vision.PointTracker
-%    imagePoints1 = detectMinEigenFeatures(last_frame, 'MinQuality', 0.1);  
-%    tracker = vision.PointTracker('MaxBidirectionalError', 1, 'NumPyramidLevels', 5);  
-%    imagePoints1 = imagePoints1.Location;  
-%    initialize(tracker, imagePoints1, last_frame);  
-   
    
    i = 0;
    [H,this_boundary,opticalFlow,~,~,~] = object_tracking(last_frame,this_frame,true,this_boundary,[]);
    figure,imshow(this_boundary); 
    while hasFrame(v)
       i = i + 1
-      if i > 10
-        break;
-      end
       last_frame = this_frame;
       
-      this_frame = im2uint8(rgb2gray(readFrame(v)));
+      this_frame = readFrame(v);
+      %this_frame = im2uint8(rgb2gray(readFrame(v)));
       %this_frame = this_frame(1:4:end,1:4:end);
-      
-%       %vision.PointTracker
-%       [imagePoints2, validIdx] = step(tracker, this_frame);  
-%       matchedPoints1 = imagePoints1(validIdx, :);
-%       matchedPoints2 = imagePoints2(validIdx, :);
-%       figure  
-%       showMatchedFeatures(last_frame, this_frame, matchedPoints1, matchedPoints2);  
       
       [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flow] = object_tracking(last_frame,this_frame,false,this_boundary,opticalFlow);
       this_boundary_list = matrix2list(this_boundary,1);
       
-      display = insertMarker(this_frame, fliplr(this_corner_list), '+','color','yellow');
-      display = insertMarker(display, fliplr(estimated_corner_list), 'circle','color','red');
-      display = insertMarker(display, fliplr(this_boundary_list), '+','color','green');
-      imshow(display);
-      hold on
-      plot(flow,'DecimationFactor',[8 8],'ScaleFactor',800)
-      
-      figure
+      %图片标记
+      if i==50
+          display = insertMarker(this_frame, fliplr(this_corner_list), '+','color','yellow');
+          display = insertMarker(display, fliplr(estimated_corner_list), 'circle','color','red');
+          display = insertMarker(display, fliplr(this_boundary_list), '+','color','green');
+          imshow(display);
+          hold on
+          plot(flow,'DecimationFactor',[8 8],'ScaleFactor',800)
+          figure
+      end
    end
    
 end

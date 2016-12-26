@@ -1,6 +1,10 @@
-%输入:uint8灰度图像last_frame,uint8灰度图像this_frame,逻辑值this_frame是否是第一帧is_first_frame,上一帧的边界last_boundary,需要维持的全局变量opticalFlow
+%输入:rgb图像last_frame,rgb图像this_frame,逻辑值this_frame是否是第一帧is_first_frame,上一帧的边界last_boundary,需要维持的全局变量opticalFlow
 %输出:投影变换H,当前帧边界this_contour,需要维持的全局变量opticalFlow
 function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flow] = object_tracking(last_frame,this_frame,is_first_frame,last_boundary,opticalFlow)
+
+    uint8_last_frame = im2uint8(rgb2gray(last_frame));
+    uint8_this_frame = im2uint8(rgb2gray(this_frame));
+    
     %% 第一帧进行光流初始化
     
     if is_first_frame == true 
@@ -9,7 +13,7 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
         opticalFlow = opticalFlowHS; %opticalFlowLK在很多地方值都为0
         this_corner_list = [];
         estimated_corner_list = [];
-        flow = estimateFlow(opticalFlow,this_frame);
+        flow = estimateFlow(opticalFlow,uint8_this_frame);
         H = [1,0,0;0,1,0;0,0,1];
         this_boundary = last_boundary;
         return
@@ -17,12 +21,12 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     
     %% 
     
-    [img_height,img_width] = size(this_frame);
+    [img_height,img_width] = size(uint8_this_frame);
 
     %求出上一帧到这一帧的光流
     %opticalFlow = opticalFlowHS;
     %flow = estimateFlow(opticalFlow,last_frame);
-    flow = estimateFlow(opticalFlow,this_frame);
+    flow = estimateFlow(opticalFlow,uint8_this_frame);
     
     last_boundary_list = matrix2list(last_boundary,1);
     [last_boundary_count,~] = size(last_boundary_list);
@@ -33,7 +37,7 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     candidate_list = matrix2list(candidate_matrix,1);
     
     %估计投影变换需要至少4对corner,因此要求harris返回上一帧至少4个corner
-    this_corner_list = harris(this_frame,candidate_list,8); %只搜索candidate中是否有交点
+    this_corner_list = harris(uint8_this_frame,candidate_list,8); %只搜索candidate中是否有交点
     %this_corner_list = harris(this_frame); %所有全局的角点
     
     estimated_corner_list = this_corner_list;%找到的角点根据光流法对应出的这一帧的位置
@@ -67,13 +71,13 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     %% 使用vision.PointTracker找两帧之间的变换关系
     
     %初始化vision.PointTracker
-    imagePoints1 = detectMinEigenFeatures(last_frame, 'MinQuality', 0.1);  
+    imagePoints1 = detectMinEigenFeatures(uint8_last_frame, 'MinQuality', 0.1);  
     tracker = vision.PointTracker('MaxBidirectionalError', 1, 'NumPyramidLevels', 5);  
     imagePoints1 = imagePoints1.Location;  
-    initialize(tracker, imagePoints1, last_frame);  
+    initialize(tracker, imagePoints1, uint8_last_frame);  
    
     %vision.PointTracker
-    [imagePoints2, validIdx] = step(tracker, this_frame);  
+    [imagePoints2, validIdx] = step(tracker, uint8_this_frame);  
     matchedPoints1 = imagePoints1(validIdx, :);  
     matchedPoints2 = imagePoints2(validIdx, :);  
     
