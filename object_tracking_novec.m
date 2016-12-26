@@ -1,7 +1,6 @@
 %输入:rgb图像last_frame,rgb图像this_frame,逻辑值this_frame是否是第一帧is_first_frame,上一帧的边界last_boundary,需要维持的全局变量opticalFlow
 %输出:投影变换H,当前帧边界this_contour,需要维持的全局变量opticalFlow
-% MKimiSH: I will try to vectorize it ........
-function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flow] = object_tracking(last_frame,this_frame,is_first_frame,last_boundary,opticalFlow)
+function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flow] = object_tracking_novec(last_frame,this_frame,is_first_frame,last_boundary,opticalFlow)
 
     uint8_this_frame = im2uint8(rgb2gray(this_frame));
     
@@ -50,21 +49,6 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
         vx = flow.Vx(this_y,this_x);
         vy = flow.Vy(this_y,this_x);
         
-%         [nbhx, nbhy] = meshgrid(-10:10, -10:10);
-%         absnx = nbhx + this_x;
-%         absny = nbhy + this_y;
-%         valid = absnx>0 & absnx<=img_width & absny>0 & absny<=img_height;
-%         valid(11,11) = 0;
-%         idx = find(valid>0);
-%         row = absny(idx);
-%         col = absnx(idx);
-%         tmp_vx = flow.Vx(sub2ind([img_height img_width], row, col));
-%         tmp_vy = flow.Vy(sub2ind([img_height img_width], row, col));
-%         dist = (tmp_vx - vx).^2 + (tmp_vy - vy).^2;
-%         [~, id] = min(dist);
-%         
-%         estimated_corner_list(i,:) = [row(id), col(id)];
-
         min_dist = inf;
         min_dist_x = 0;
         min_dist_y = 0;
@@ -110,13 +94,11 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     %% 使用vision.PointTracker找两帧之间的变换关系
     
     %初始化vision.PointTracker
-    tic;
     imagePoints1 = detectMinEigenFeatures(uint8_last_frame, 'MinQuality', 0.1);  
     tracker = vision.PointTracker('MaxBidirectionalError', 1, 'NumPyramidLevels', 5);  
     imagePoints1 = imagePoints1.Location;  
     initialize(tracker, imagePoints1, uint8_last_frame);  
-    toc;
-    
+   
     %vision.PointTracker
     [imagePoints2, validIdx] = step(tracker, uint8_this_frame);  
     matchedPoints1 = imagePoints1(validIdx, :);  
@@ -130,19 +112,14 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     H = tform.T';%从角点位置变换,得到两帧之间的投影变换关系
     
     this_boundary_list = fliplr(last_boundary_list);
-    
-    extendbd = [this_boundary_list, ones(length(this_boundary_list), 1)];
-    tfbd = extendbd*H';
-    this_boundary_list(:,1) = round(tfbd(:,1)./tfbd(:,3));
-    this_boundary_list(:,2) = round(tfbd(:,2)./tfbd(:,3));
-%     for i = 1:last_boundary_count
-%         cur_point = this_boundary_list(i,:);
-%         extended_cur_point = [cur_point';1];
-%         transformed_extended_cur_point = H*extended_cur_point;
-%         transformed_x = round(transformed_extended_cur_point(1) / transformed_extended_cur_point(3));
-%         transformed_y = round(transformed_extended_cur_point(2) / transformed_extended_cur_point(3));
-%         this_boundary_list(i,:) = [transformed_y,transformed_x];
-%     end
+    for i = 1:last_boundary_count
+        cur_point = this_boundary_list(i,:);
+        extended_cur_point = [cur_point';1];
+        transformed_extended_cur_point = H*extended_cur_point;
+        transformed_x = round(transformed_extended_cur_point(1) / transformed_extended_cur_point(3));
+        transformed_y = round(transformed_extended_cur_point(2) / transformed_extended_cur_point(3));
+        this_boundary_list(i,:) = [transformed_y,transformed_x];
+    end
 
     this_boundary = list2matrix(this_boundary_list,1,img_height,img_width);
     
@@ -160,6 +137,7 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     
     K = convhull(this_boundary_list_x,this_boundary_list_y);
     this_boundary_list = [this_boundary_list_y(K),this_boundary_list_x(K)];
+    
     
     
     x_list = [];
@@ -181,18 +159,14 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
         n = max(abs(cur_y-next_y),abs(cur_x-next_x));
         dy = (next_y - cur_y)/n;
         dx = (next_x - cur_x)/n;
-        
-        tmp_y = round((0:n-1)*dy + cur_y);
-        tmp_x = round((0:n-1)*dx + cur_x);
-        x_list = [x_list; tmp_x'];
-        y_list = [y_list; tmp_y'];
-%         for j=0:n-1
-%             tmp_y = round(cur_y + j*dy);
-%             tmp_x = round(cur_x + j*dx);
-%                 
-%             x_list(end+1) = tmp_x;
-%             y_list(end+1) = tmp_y;
-%         end
+            
+        for j=0:n-1
+            tmp_y = round(cur_y + j*dy);
+            tmp_x = round(cur_x + j*dx);
+                
+            x_list(end+1) = tmp_x;
+            y_list(end+1) = tmp_y;
+        end
             
     end
     

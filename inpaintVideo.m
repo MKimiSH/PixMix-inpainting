@@ -38,7 +38,7 @@ c = c0;
 m = m0;
 H = [];
 for i=2:timeSpan
-    [vid{i}, f, c, H, of, ofobj] = inpaintSecondFrame(vid{i}, vid{i-1}, f, m, c, of, ofobj);
+    [vid{i}, m, f, c, H, of, ofobj] = inpaintSecondFrame(vid{i}, vid{i-1}, f, m, c, of, ofobj);
 end
 
 %% write video

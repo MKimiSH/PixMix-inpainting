@@ -89,7 +89,7 @@ start = uicontrol('String', 'start', 'Enable', 'off',...
 %         Lines % line point (n x 4 matrix)
         Lines = round(Lines);
         usrlines = struct('point1', [-1 -1], 'point2', [0 0], 'theta', 0, 'rho', 0);
-        for i=1:length(Lines);
+        for i=1:size(Lines, 1);
             usrlines(i).point1 = Lines(i, 1:2);
             usrlines(i).point2 = Lines(i, 3:4);
             [usrlines(i).theta,  usrlines(i).rho] = calcThetaRho(Lines(i,:));

@@ -1,4 +1,4 @@
-function [I, F, C, H, OF, OFOBJ] = inpaintSecondFrame(I, lastI, lastF, lastM, lastC, OF, OFOBJ)
+function [I, M, F, C, H, OF, OFOBJ] = inpaintSecondFrame(I, lastI, lastF, lastM, lastC, OF, OFOBJ)
 % Inpaint image _I_ with a refence fram _lastI_, between which there exist a
 % homography _H_ which satisfies p = p1*H, p \in _I_ and p1 in _lastI_ (row vectors). 
 % _lastF_ is the px mapping of _lastI_, _C_ the contour points of the object to be
@@ -10,15 +10,20 @@ function [I, F, C, H, OF, OFOBJ] = inpaintSecondFrame(I, lastI, lastF, lastM, la
 % 3. Refine initF to get F and I, and (if necessary) blend the edges
 
 %% Pt. 1
-[H, C, OFOBJ, ~, ~, OF] = object_tracking(lastI, I, 0, lastC, OFOBJ);
+tic;
+[H, C, OFOBJ, ~, ~, OF] = object_tracking_novec(lastI, I, 0, lastC, OFOBJ);
+t1 = toc; fprintf('%.4f sec for tracking\n', t1);
 %% Pt. 2
 H = H';
+tic;
 [M] = getMFromH(lastM, H);
 [refI, initF] = forwardF(I, M, lastI, lastF, lastM, H);
+t2 = toc; fprintf('%.4f sec for forwarding\n', t2);
 % refI = lightnessAdjust(refI, M, C, lastI, lastC);
 %% Pt. 3
+tic;
 [I, F] = fillSecondImage(I, M, initF, refI);
-
+t3 = toc; fprintf('%.4f sec for inpainting\n', t3);
 end
 
 function [M] = getMFromH(lastM, H)
