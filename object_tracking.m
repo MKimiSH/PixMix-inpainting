@@ -19,16 +19,21 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
         return
     end
     
-    %% 
-    
     uint8_last_frame = im2uint8(rgb2gray(last_frame));
     [img_height,img_width] = size(uint8_this_frame);
+    
+    last_boundary_list = matrix2list(last_boundary,1);
+    [last_boundary_count,~] = size(last_boundary_list);
+%{    
+    
+    %%
+    
+    
 
     %求出上一帧到这一帧的光流
     flow = estimateFlow(opticalFlow,uint8_this_frame);
     
-    last_boundary_list = matrix2list(last_boundary,1);
-    [last_boundary_count,~] = size(last_boundary_list);
+    
     
     %膨胀一次，增加candidate数量
     se = ones(8,8);
@@ -106,7 +111,8 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
         this_boundary = last_boundary;
         return
     end
-    
+
+%}
     %% 使用vision.PointTracker找两帧之间的变换关系
     
     %初始化vision.PointTracker
@@ -157,6 +163,8 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     
     this_boundary_list_y = this_boundary_list(:,1);
     this_boundary_list_x = this_boundary_list(:,2);
+    
+    size(this_boundary_list)
     
     K = convhull(this_boundary_list_x,this_boundary_list_y);
     this_boundary_list = [this_boundary_list_y(K),this_boundary_list_x(K)];

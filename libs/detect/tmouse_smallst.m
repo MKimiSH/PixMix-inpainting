@@ -55,7 +55,8 @@ switch(action)
       this_boundary_list = matrix2list(this_boundary,1);
       
       %Í¼Æ¬±ê¼Ç
-      if i==150
+      %if i==50
+      if mod(i,10) == 0
           display = insertMarker(this_frame, fliplr(this_corner_list), '+','color','yellow');
           display = insertMarker(display, fliplr(estimated_corner_list), 'circle','color','red');
           display = insertMarker(display, fliplr(this_boundary_list), '+','color','green');
