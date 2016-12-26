@@ -1,4 +1,5 @@
 clear;
+close all
 % 
 % landmarks = [83,48; 
 %     75,48;
