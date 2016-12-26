@@ -1,17 +1,18 @@
 %输入:rgb图像last_frame,rgb图像this_frame,逻辑值this_frame是否是第一帧is_first_frame,上一帧的边界last_boundary,需要维持的全局变量opticalFlow
 %输出:投影变换H,当前帧边界this_contour,需要维持的全局变量opticalFlow
-function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flow] = object_tracking_novec(last_frame,this_frame,is_first_frame,last_boundary,opticalFlow)
+function [H,this_boundary, this_mask, opticalFlow,this_corner_list,estimated_corner_list,flow] = object_tracking_novec(last_frame,this_frame,is_first_frame,last_boundary,opticalFlow)
 
     uint8_this_frame = im2uint8(rgb2gray(this_frame));
     
     %% 第一帧进行光流初始化
-    
+    tic;
     if is_first_frame == true 
         %opticalFlow = opticalFlowLKDoG('NumFrames',3);
         opticalFlow = opticalFlowFarneback;
         %opticalFlow = opticalFlowHS; %opticalFlowLK在很多地方值都为0
         this_corner_list = [];
         estimated_corner_list = [];
+        this_mask = [];
         flow = estimateFlow(opticalFlow,uint8_this_frame);
         H = [1,0,0;0,1,0;0,0,1];
         this_boundary = last_boundary;
@@ -41,6 +42,7 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     estimated_corner_list = this_corner_list;%找到的角点根据光流法对应出的这一帧的位置
     [count,~] = size(estimated_corner_list);
     
+    t = toc; fprintf('%.4f sec for optical flow\n', t); 
     
     for i = 1:count %计算上一帧的角点按照光流法,这一帧应该到哪了
         this_y = this_corner_list(i,1);
@@ -94,10 +96,12 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     %% 使用vision.PointTracker找两帧之间的变换关系
     
     %初始化vision.PointTracker
+    tic;
     imagePoints1 = detectMinEigenFeatures(uint8_last_frame, 'MinQuality', 0.1);  
     tracker = vision.PointTracker('MaxBidirectionalError', 1, 'NumPyramidLevels', 5);  
     imagePoints1 = imagePoints1.Location;  
-    initialize(tracker, imagePoints1, uint8_last_frame);  
+    initialize(tracker, imagePoints1, uint8_last_frame);
+    t = toc; fprintf('%.4f sec for init Point Tracker\n', t); 
    
     %vision.PointTracker
     [imagePoints2, validIdx] = step(tracker, uint8_this_frame);  
@@ -170,8 +174,8 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
             
     end
     
-    this_boundary = maxLianTongYu_smallst(imclose(detect_obj_smallst(this_frame, [x_list',y_list']),se)); 
-    this_boundary = edge(this_boundary, 'sobel');
+    this_mask = maxLianTongYu_smallst(imclose(detect_obj_smallst(this_frame, [x_list',y_list']),se)); 
+    this_boundary = edge(this_mask, 'sobel');
     
 %     [X,Y] = meshgrid(1:img_height,1:img_width);
 %     

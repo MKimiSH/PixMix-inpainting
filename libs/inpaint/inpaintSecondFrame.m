@@ -11,18 +11,21 @@ function [I, M, F, C, H, OF, OFOBJ] = inpaintSecondFrame(I, lastI, lastF, lastM,
 
 %% Pt. 1
 tic;
-[H, C, OFOBJ, ~, ~, OF] = object_tracking_novec(lastI, I, 0, lastC, OFOBJ);
+[H, C, M, OFOBJ, ~, ~, OF] = object_tracking_novec(lastI, I, 0, lastC, OFOBJ);
 t1 = toc; fprintf('%.4f sec for tracking\n', t1);
 %% Pt. 2
 H = H';
 tic;
-[M] = getMFromH(lastM, H);
+% [M] = getMFromH(lastM, H);
 [refI, initF] = forwardF(I, M, lastI, lastF, lastM, H);
+% figure, imshow(M);
 t2 = toc; fprintf('%.4f sec for forwarding\n', t2);
 % refI = lightnessAdjust(refI, M, C, lastI, lastC);
 %% Pt. 3
 tic;
 [I, F] = fillSecondImage(I, M, initF, refI);
+close;
+figure, imshow(I);
 t3 = toc; fprintf('%.4f sec for inpainting\n', t3);
 end
 

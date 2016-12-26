@@ -1,6 +1,6 @@
 function [I, M, F, C, OF, OFobj] = inpaintFirstFrame(I, M, nouseM, usrLn, C)
 % inpaint an image _I_ from scratch
-[~, ~, OFobj, ~, ~, OF] = object_tracking_novec([], I, 1, C, []); % initialize OF
+[~, ~, ~, OFobj, ~, ~, OF] = object_tracking_novec([], I, 1, C, []); % initialize OF
 
 I = im2single(I);
 
@@ -22,6 +22,6 @@ nouseM = nouseM>0;
 
 I = pyI{length(pyI)};
 
-% figure, imshow(resI);
+figure, imshow(I);
 
 end

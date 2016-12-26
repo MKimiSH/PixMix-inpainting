@@ -10,7 +10,7 @@ float calcTotalCost(int, int, fij);
 float calcLineCost(int, int, fij);
 float calcSpatialCost(int i, int j, fij ff);
 float calcAppearanceCost(int i, int j, fij ff);
-float calcSumTotalCost();
+float calcSumTotalCost(bool);
 inline fij  getFij(int i, int j);
 inline void setFij(int i, int j, fij ff);
 inline bool isMask(int i, int j);
@@ -52,7 +52,7 @@ bool	*numask;
 mxArray *linesptr;
 int		R = 0, C = 0;
 int		Rbeg, Cbeg, Rend, Cend, nnzMask, nnzNUMask;
-int		RSRounds = 6;
+int		RSRounds = 10;
 float alphaSp = .005, alphaAp = 0.5, alphaStr = 1 - alphaSp - alphaAp;
 float cs_imp = 1, cs_rad = 1;
 float kappa = MAX(R, C); // I have no idea how to set this thing...
@@ -162,7 +162,7 @@ void fillOneLevel(int* initf, imdata* I, const bool* M, float* D, int level, lin
 	double prevCost = 1e20, currCost = 0;
 	for (int it = 0; it<numIter; ++it) {
 		fillIWithF();
-		currCost = calcSumTotalCost();
+		currCost = calcSumTotalCost(false);
 		if (checkConvergence(prevCost, currCost)) {
 			printf("converged before iteration %d\n", it);
 			return;
@@ -444,7 +444,7 @@ float calcLineCost(int r, int c, fij ff) {
 	return ret;
 }
 
-float calcSumTotalCost() {
+float calcSumTotalCost(bool verb) {
 	float sumspc = 0, sumapc = 0, sumstr = 0;
 	for (int j = 0; j < C; ++j) {
 		for (int i = 0; i < R; ++i) {
@@ -457,8 +457,10 @@ float calcSumTotalCost() {
 	}
 	//printf("total spc = %lf, total apc = %lf, total strc = %lf\n", sumspc, sumapc, sumstr);
 	float ret = sumspc*alphaSp + sumapc*alphaAp + sumstr*alphaStr;
-	printf("total cost = %lf, total spc = %lf, total apc = %lf, total strc = %lf\n", ret, sumspc, sumapc, sumstr);
-	printf("avg px cost = %lf\n", ret / nnzMask);
+	if (verb) {
+		printf("total cost = %lf, total spc = %lf, total apc = %lf, total strc = %lf\n", ret, sumspc, sumapc, sumstr);
+		printf("avg px cost = %lf\n", ret / nnzMask);
+	}
 	return ret;
 }
 
@@ -579,7 +581,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 	fillOneLevel(initf, I, M, D, level, lines, iternum);
 
-	calcSumTotalCost();
+	calcSumTotalCost(true);
 
 	//filledI = im; 软拷贝不行
 	//retf = f;	同上

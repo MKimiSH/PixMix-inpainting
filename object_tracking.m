@@ -50,51 +50,51 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
         vx = flow.Vx(this_y,this_x);
         vy = flow.Vy(this_y,this_x);
         
-%         [nbhx, nbhy] = meshgrid(-10:10, -10:10);
-%         absnx = nbhx + this_x;
-%         absny = nbhy + this_y;
-%         valid = absnx>0 & absnx<=img_width & absny>0 & absny<=img_height;
-%         valid(11,11) = 0;
-%         idx = find(valid>0);
-%         row = absny(idx);
-%         col = absnx(idx);
-%         tmp_vx = flow.Vx(sub2ind([img_height img_width], row, col));
-%         tmp_vy = flow.Vy(sub2ind([img_height img_width], row, col));
-%         dist = (tmp_vx - vx).^2 + (tmp_vy - vy).^2;
-%         [~, id] = min(dist);
-%         
-%         estimated_corner_list(i,:) = [row(id), col(id)];
-
-        min_dist = inf;
-        min_dist_x = 0;
-        min_dist_y = 0;
-        neighborhood = 10;
-        for dx = -neighborhood:neighborhood
-            for dy = -neighborhood:neighborhood
-                if (dx==0) && (dy==0)
-                    continue
-                end
-                
-                tmp_y = this_y + dy;
-                tmp_x = this_x + dx;
-                
-                if (tmp_y <= 0) || (tmp_y > img_height) || (tmp_x <= 0) || (tmp_x > img_width)
-                    continue
-                end
-                
-                tmp_vx = flow.Vx(tmp_y,tmp_x);
-                tmp_vy = flow.Vy(tmp_y,tmp_x);
-                
-                dist = (vx-tmp_vx)^2 + (vy-tmp_vy)^2;
-                if dist < min_dist
-                    min_dist = dist;
-                    min_dist_y = tmp_y;
-                    min_dist_x = tmp_x;
-                end
-            end
-        end
+        [nbhx, nbhy] = meshgrid(-10:10, -10:10);
+        absnx = nbhx + this_x;
+        absny = nbhy + this_y;
+        valid = absnx>0 & absnx<=img_width & absny>0 & absny<=img_height;
+        valid(11,11) = 0;
+        idx = find(valid>0);
+        row = absny(idx);
+        col = absnx(idx);
+        tmp_vx = flow.Vx(sub2ind([img_height img_width], row, col));
+        tmp_vy = flow.Vy(sub2ind([img_height img_width], row, col));
+        dist = (tmp_vx - vx).^2 + (tmp_vy - vy).^2;
+        [~, id] = min(dist);
         
-        estimated_corner_list(i,:) = [min_dist_y,min_dist_x];
+        estimated_corner_list(i,:) = [row(id), col(id)];
+
+%         min_dist = inf;
+%         min_dist_x = 0;
+%         min_dist_y = 0;
+%         neighborhood = 10;
+%         for dx = -neighborhood:neighborhood
+%             for dy = -neighborhood:neighborhood
+%                 if (dx==0) && (dy==0)
+%                     continue
+%                 end
+%                 
+%                 tmp_y = this_y + dy;
+%                 tmp_x = this_x + dx;
+%                 
+%                 if (tmp_y <= 0) || (tmp_y > img_height) || (tmp_x <= 0) || (tmp_x > img_width)
+%                     continue
+%                 end
+%                 
+%                 tmp_vx = flow.Vx(tmp_y,tmp_x);
+%                 tmp_vy = flow.Vy(tmp_y,tmp_x);
+%                 
+%                 dist = (vx-tmp_vx)^2 + (vy-tmp_vy)^2;
+%                 if dist < min_dist
+%                     min_dist = dist;
+%                     min_dist_y = tmp_y;
+%                     min_dist_x = tmp_x;
+%                 end
+%             end
+%         end
+%         
+%         estimated_corner_list(i,:) = [min_dist_y,min_dist_x];
     end
     
     %'similarity'效果不好
@@ -110,12 +110,12 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     %% 使用vision.PointTracker找两帧之间的变换关系
     
     %初始化vision.PointTracker
-    tic;
+%     tic;
     imagePoints1 = detectMinEigenFeatures(uint8_last_frame, 'MinQuality', 0.1);  
     tracker = vision.PointTracker('MaxBidirectionalError', 1, 'NumPyramidLevels', 5);  
     imagePoints1 = imagePoints1.Location;  
     initialize(tracker, imagePoints1, uint8_last_frame);  
-    toc;
+%     t = toc; fprintf('%.4f sec for init Point Tracker\n', t);
     
     %vision.PointTracker
     [imagePoints2, validIdx] = step(tracker, uint8_this_frame);  
@@ -182,17 +182,17 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
         dy = (next_y - cur_y)/n;
         dx = (next_x - cur_x)/n;
         
-        tmp_y = round((0:n-1)*dy + cur_y);
-        tmp_x = round((0:n-1)*dx + cur_x);
-        x_list = [x_list; tmp_x'];
-        y_list = [y_list; tmp_y'];
-%         for j=0:n-1
-%             tmp_y = round(cur_y + j*dy);
-%             tmp_x = round(cur_x + j*dx);
-%                 
-%             x_list(end+1) = tmp_x;
-%             y_list(end+1) = tmp_y;
-%         end
+%         tmp_y = round((0:n-1)*dy + cur_y);
+%         tmp_x = round((0:n-1)*dx + cur_x);
+%         x_list = [x_list; tmp_x'];
+%         y_list = [y_list; tmp_y'];
+        for j=0:n-1
+            tmp_y = round(cur_y + j*dy);
+            tmp_x = round(cur_x + j*dx);
+                
+            x_list(end+1) = tmp_x;
+            y_list(end+1) = tmp_y;
+        end
             
     end
     

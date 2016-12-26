@@ -11,7 +11,7 @@ float calcTotalCost(int, int, fij);
 float calcSpatialCost(int i, int j, fij ff);
 float calcAppearanceCost(int i, int j, fij ff);
 float calcAdditionalAppCost(int, int, fij);
-float calcSumTotalCost();
+float calcSumTotalCost(bool);
 inline fij  getFij(int i, int j);
 inline void setFij(int i, int j, fij ff);
 inline bool isMask(int i, int j);
@@ -138,7 +138,7 @@ void fillOneLevel(int* initf, imdata* I, const bool* M, float* D, imdata* refI, 
 	double prevCost = 1e20, currCost = 0;
 	for (int it = 0; it<numIter; ++it) {
 		fillIWithF();
-		currCost = calcSumTotalCost();
+		currCost = calcSumTotalCost(false);
 		if (checkConvergence(prevCost, currCost)) {
 			printf("converged before iteration %d\n", it);
 			return;
@@ -404,7 +404,7 @@ float calcAdditionalAppCost(int i, int j, fij ff) {
 	return (double)addtc*w / cnt; // 8-bit grayscale, [0,1] is too small...compared to spc..
 }
 
-float calcSumTotalCost() {
+float calcSumTotalCost(bool verb) {
 	float sumspc = 0, sumapc = 0, sumstr = 0, sumaddtc = 0;
 	for (int j = 0; j < C; ++j) {
 		for (int i = 0; i < R; ++i) {
@@ -418,8 +418,10 @@ float calcSumTotalCost() {
 	}
 	//printf("total spc = %lf, total apc = %lf, total strc = %lf\n", sumspc, sumapc, sumstr);
 	float ret = sumspc*alphaSp + sumapc*alphaAp + sumaddtc*alphaAddt;//sumstr*alphaStr;
-	printf("total cost = %lf, total spc = %lf, total apc = %lf, total addtc = %lf\n", ret, sumspc, sumapc, sumaddtc);
-	printf("avg px cost = %lf\n", ret / nnzMask);
+	if (verb) {
+		printf("total cost = %lf, total spc = %lf, total apc = %lf, total strc = %lf\n", ret, sumspc, sumapc, sumstr);
+		printf("avg px cost = %lf\n", ret / nnzMask);
+	}
 	return ret;
 }
 
@@ -527,7 +529,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 	fillOneLevel(initf, I, M, D, rI, (line*)NULL, iternum);
 
-	calcSumTotalCost();
+	calcSumTotalCost(true);
 
 	//filledI = im; 软拷贝不行
 	//retf = f;	同上

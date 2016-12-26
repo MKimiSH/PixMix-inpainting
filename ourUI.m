@@ -88,10 +88,11 @@ start = uicontrol('String', 'start', 'Enable', 'off',...
         end
 %         Lines % line point (n x 4 matrix)
         Lines = round(Lines);
-        usrlines = struct('point1', [-1 -1], 'point2', [0 0], 'theta', 0, 'rho', 0);
+        usrlines = struct('point1', [-1 -1], 'point2', [0 0], 'theta', 0, 'rho', 0,...
+            'k', 0, 'isgood', 1);
         for i=1:size(Lines, 1);
-            usrlines(i).point1 = Lines(i, 1:2);
-            usrlines(i).point2 = Lines(i, 3:4);
+            usrlines(i).point1 = Lines(i, [1 3]);
+            usrlines(i).point2 = Lines(i, [2 4]);
             [usrlines(i).theta,  usrlines(i).rho] = calcThetaRho(Lines(i,:));
         end
         inpaintVideo(video, 'out.mp4', fres, avoidArea, usrlines, this_boundary);
@@ -100,8 +101,8 @@ end
 
 function [t, r] = calcThetaRho(p)
 x1 = p(1)-1;
-y1 = p(2)-1;
-x2 = p(3)-1;
+y1 = p(3)-1;
+x2 = p(2)-1;
 y2 = p(4)-1;
 
 eq1 = sprintf('r = %d*cos(t) + %d*sin(t)', x1, y1);

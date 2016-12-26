@@ -5,7 +5,7 @@ function [] = inpaintVideo(vidname, outname, M0, UM0, usrlines, C0)
 %% read video
 
 startTime = 0;
-endTime = 3;
+endTime = 1;
 
 vidObj = VideoReader(vidname);
 vidHeight = vidObj.Height;

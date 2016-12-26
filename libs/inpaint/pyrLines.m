@@ -10,14 +10,14 @@ toplines = pyLines{proclvl};
 
 %% È¥¸öÖØ
 if usrLines(1).point1(1)>0
-    fac = (proclvl-L);
+    fac = 2^(proclvl-L);
     nusrln = length(usrLines);
     fprintf('%d lines detected, user added %d lines\n', nlines, nusrln);
     for i = 1:nusrln
-        usrLines(i).point1 = (usrLines(i).point1 - 1)/fac + 1; % original is (1,1)
-        usrLines(i).point2 = (usrLines(i).point2 - 1)/fac + 1;
+        usrLines(i).point1 = (usrLines(i).point1 - 1)*fac + 1; % original is (1,1)
+        usrLines(i).point2 = (usrLines(i).point2 - 1)*fac + 1;
         usrLines(i).theta = usrLines(i).theta;
-        usrLines(i).rho = usrLines(i).rho/fac;
+        usrLines(i).rho = usrLines(i).rho*fac;
         for j = 1:nlines
             if linesTooClose(usrLines(i), toplines(j))
 %                 toplines(j) = usrLines(i); 

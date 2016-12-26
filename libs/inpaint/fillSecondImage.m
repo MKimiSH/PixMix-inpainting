@@ -17,5 +17,4 @@ prefI = permute(im2uint8(refI), [3 1 2]);
 F = ipermute(F, [3 1 2]);
 I = im2single(ipermute(I, [3 1 2]));
 
-figure, imshow(I);
 end
