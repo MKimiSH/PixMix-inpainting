@@ -3,17 +3,17 @@ close all
 
 addpath(genpath('libs'));
 
-global snooker;
+global this_frame;
 global v;
 global landmarks;
 global fres;
 
-v = VideoReader('fr1.mp4');
-%v = VideoReader('rock.mp4');
+%v = VideoReader('fr1.mp4');
+v = VideoReader('rock.mp4');
 
-snooker = readFrame(v);
-imshow(snooker);
+this_frame = readFrame(v);
+imshow(this_frame);
 hold on;
-%landmarks = false(size(snooker));
+%landmarks = false(size(this_frame));
 landmarks = [];
 tmouse_smallst();

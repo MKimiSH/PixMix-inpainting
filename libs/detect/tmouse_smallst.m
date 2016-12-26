@@ -4,13 +4,13 @@ function tmouse_smallst(action)
 if(nargin == 0)
     action = 'start';
 end
-global snooker;
+global this_frame;
 global landmarks;
 global fres;
 global v;
 switch(action)
   case 'start'
-   %axis([0 size(snooker,1) 0 size(snooker,2)]);% 设定图轴范围
+   %axis([0 size(this_frame,1) 0 size(this_frame,2)]);% 设定图轴范围
   % box on;% 将图轴加上图�?
    %title('Click and drag your mouse in this window!');
    set(gcf, 'WindowButtonDownFcn', 'tmouse_smallst down');
@@ -31,38 +31,53 @@ switch(action)
    set(gcf, 'WindowButtonUpFcn', '');
    landmarks = unique(landmarks, 'rows', 'stable');
    se = strel('disk',4);
-   fres = maxLianTongYu_smallst(imclose(detect_obj_smallst(snooker, landmarks),se));   
+   fres = maxLianTongYu_smallst(imclose(detect_obj_smallst(this_frame, landmarks),se));   
    
-   %fres = fres(1:25:end,1:25:end);
+   %fres = fres(1:4:end,1:4:end);
    
    this_boundary = edge(fres, 'sobel');
    
    
-   last_frame = im2uint8(rgb2gray(snooker));
-   %snooker = last_frame;
-   %snooker = im2uint8(rgb2gray(readFrame(v)));
-   %snooker = snooker(1:2:end,1:2:end);
+   last_frame = im2uint8(rgb2gray(this_frame));
+   this_frame = last_frame;
+   %this_frame = im2uint8(rgb2gray(readFrame(v)));
+   %this_frame = this_frame(1:4:end,1:4:end);
+   
+   %��ʼ��vision.PointTracker
+   imagePoints1 = detectMinEigenFeatures(last_frame, 'MinQuality', 0.1);  
+   tracker = vision.PointTracker('MaxBidirectionalError', 1, 'NumPyramidLevels', 5);  
+   imagePoints1 = imagePoints1.Location;  
+   initialize(tracker, imagePoints1, last_frame);  
+   
    
    i = 0;
-   [H,this_boundary,opticalFlow,~,~] = object_tracking(last_frame,snooker,true,this_boundary,[]);
+   [H,this_boundary,opticalFlow,~,~,~] = object_tracking(last_frame,this_frame,true,this_boundary,[]);
    figure,imshow(this_boundary); 
    while hasFrame(v)
       i = i + 1
       if i > 10
         break;
       end
-      last_frame = snooker;
+      last_frame = this_frame;
       
-      snooker = im2uint8(rgb2gray(readFrame(v)));
-      %snooker = snooker(1:2:end,1:2:end);
+      this_frame = im2uint8(rgb2gray(readFrame(v)));
+      %this_frame = this_frame(1:4:end,1:4:end);
       
       
-      [H,this_boundary,opticalFlow,last_corner_list,estimated_corner_list,flow] = object_tracking(last_frame,snooker,false,this_boundary,opticalFlow);
+      %vision.PointTracker
+      [imagePoints2, validIdx] = step(tracker, this_frame);  
+      matchedPoints1 = imagePoints1(validIdx, :);  
+      matchedPoints2 = imagePoints2(validIdx, :);  
+      figure  
+      showMatchedFeatures(last_frame, this_frame, matchedPoints1, matchedPoints2);  
       
-      this_corner_list = harris(snooker);
+      
+      [H,this_boundary,opticalFlow,last_corner_list,estimated_corner_list,flow] = object_tracking(last_frame,this_frame,false,this_boundary,opticalFlow);
+      
+      this_corner_list = harris(this_frame);
       this_boundary_list = matrix2list(this_boundary,1);
       
-      display = insertMarker(snooker, fliplr(last_corner_list), '+','color','yellow');
+      display = insertMarker(this_frame, fliplr(last_corner_list), '+','color','yellow');
       display = insertMarker(display, fliplr(estimated_corner_list), 'circle','color','yellow');
       %display = insertMarker(display, fliplr(this_corner_list), '+','color','red');
       display = insertMarker(display, fliplr(this_boundary_list), '+','color','green');

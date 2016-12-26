@@ -22,9 +22,9 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     [img_height,img_width] = size(this_frame);
 
     %求出上一帧到这一帧的光流
-    opticalFlow = opticalFlowHS;
+    %opticalFlow = opticalFlowHS;
     %opticalFlow = opticalFlowLK('NoiseThreshold',0.009);
-    flow = estimateFlow(opticalFlow,last_frame);
+    %flow = estimateFlow(opticalFlow,last_frame);
     flow = estimateFlow(opticalFlow,this_frame);
     
     %flow = estimateFlow(opticalFlow,this_frame);
@@ -41,8 +41,8 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     candidate_list = matrix2list(candidate_matrix,1);
     
     %估计投影变换需要至少4对corner,因此要求harris返回上一帧至少4个corner
-    %this_corner_list = harris(this_frame,candidate_list,8); %只搜索candidate中是否有交点
-    this_corner_list = harris(this_frame); %所有全局的角点
+    this_corner_list = harris(this_frame,candidate_list,8); %只搜索candidate中是否有交点
+    %this_corner_list = harris(this_frame); %所有全局的角点
     
     estimated_corner_list = this_corner_list;%找到的角点根据光流法对应出的这一帧的位置
     [count,~] = size(estimated_corner_list);
@@ -53,8 +53,8 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
         dx = flow.Vx(this_y,this_x);
         dy = flow.Vy(this_y,this_x);
         
-        this_y = round(this_y+100*dy);
-        this_x = round(this_x+100*dx);
+        this_y = round(this_y+30*dy);
+        this_x = round(this_x+30*dx);
         
         this_y = max(min(this_y,img_height),1);
         this_x = max(min(this_x,img_width),1);
@@ -62,14 +62,13 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
         estimated_corner_list(i,:) = [this_y,this_x];
     end
 
-    
-    [tform, ~, ~, status] = estimateGeometricTransform(fliplr(this_corner_list),fliplr(estimated_corner_list),'affine');
-    %[tform, ~, ~, status] = estimateGeometricTransform(fliplr(this_corner_list),fliplr(estimated_corner_list),'projective');
+    %'similarity'效果不好
+    %[tform, ~, ~, status] = estimateGeometricTransform(fliplr(this_corner_list),fliplr(estimated_corner_list),'affine');
+    [tform, ~, ~, status] = estimateGeometricTransform(fliplr(this_corner_list),fliplr(estimated_corner_list),'projective');
     if status == 2 %如果估计投影变换时inlier太少，认为两帧之间没有运动
         warning('inlier not enough');
         H = [1,0,0;0,1,0;0,0,1];
         this_boundary = last_boundary;
-        
         return
     end
     
@@ -79,12 +78,14 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     
     this_boundary_list = fliplr(last_boundary_list);
     for i = 1:last_boundary_count
+        
         cur_point = this_boundary_list(i,:);
         extended_cur_point = [cur_point';1];
-        transformed_extended_cur_point = H*extended_cur_point;
+        transformed_extended_cur_point = H'*extended_cur_point;
         transformed_x = round(transformed_extended_cur_point(1) / transformed_extended_cur_point(3));
         transformed_y = round(transformed_extended_cur_point(2) / transformed_extended_cur_point(3));
         this_boundary_list(i,:) = [transformed_y,transformed_x];
+
     end
 
     this_boundary = list2matrix(this_boundary_list,1,img_height,img_width);
