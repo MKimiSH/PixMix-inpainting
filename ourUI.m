@@ -76,8 +76,12 @@ start = uicontrol('String', 'start', 'Enable', 'off',...
         Lines = [Lines;reshape(pos, 1, 4)];
     end
     function mystart(hObject, eventdata)
-        Landmarks
-        Lines
-        avoidMarks
+        se = strel('disk',4);
+        fres = maxLianTongYu_smallst(imclose(detect_obj_smallst(this_frame, landmarks),se));   
+        this_boundary = edge(fres, 'sobel'); % first frame boundary
+        [h,w] = size(fres);
+        [x,y] = meshgrid(1:w, 1:h);
+        avoidArea = inpolygon(x,y, avoidMarks(:,1), avoidMarks(:,2)); % avoid area
+        Lines % line point (n x 4 matrix)
     end
 end    
