@@ -31,31 +31,45 @@ switch(action)
    set(gcf, 'WindowButtonUpFcn', '');
    landmarks = unique(landmarks, 'rows', 'stable');
    fres = (detect_obj_smallst(snooker, landmarks));   
-   this_contour = edge(fres, 'sobel');
+   this_boundary = edge(fres, 'sobel');
    
-   %function [H,this_contour,opticalFlow] = object_tracking(last_frame,this_frame,is_first_frame,last_contour,opticalFlow)
+   size(fres)
+   
    last_frame = im2uint8(rgb2gray(snooker));
-   
+   %snooker = last_frame;
    snooker = im2uint8(rgb2gray(readFrame(v)));
-    i = 0;
-    [H,this_contour,opticalFlow] = object_tracking(snooker,last_frame,1,this_contour,[]);
-       figure,imshow(this_contour); 
+   snooker = snooker(1:2:end,1:2:end);
+   
+   i = 0;
+   [H,this_boundary,opticalFlow,~,~] = object_tracking(last_frame,snooker,true,this_boundary,[]);
+   figure,imshow(this_boundary); 
    while hasFrame(v)
       i = i + 1
-      if i > 15
+      if i > 10
         break;
       end
-       last_frame = snooker;
-       snooker = im2uint8(rgb2gray(readFrame(v)));
-       [H,this_contour,opticalFlow] = object_tracking(snooker,last_frame,0,this_contour,opticalFlow);
-       
-       harris_global = harris_old(snooker);
-       
-       figure,imshow(snooker);
-       hold on
-       imshow(mat2gray(harris_global))
-       hold off
-       figure,imshow(this_contour);
+      last_frame = snooker;
+      
+      snooker = im2uint8(rgb2gray(readFrame(v)));
+      snooker = snooker(1:2:end,1:2:end);
+      
+      last_boundary = this_boundary;
+      
+      [H,this_boundary,opticalFlow,last_corner_list,flow] = object_tracking(last_frame,snooker,false,this_boundary,opticalFlow);
+      
+      change = isequal(last_boundary, this_boundary)
+      
+      this_corner_list = harris(snooker);
+      this_boundary_list = matrix2list(this_boundary,1);
+      
+      display = insertMarker(snooker, fliplr(last_corner_list), '+','color','blue');
+      display = insertMarker(display, fliplr(this_corner_list), '+','color','red');
+      display = insertMarker(display, fliplr(this_boundary_list), '+','color','green');
+      imshow(display);
+      hold on
+      plot(flow,'DecimationFactor',[1 1],'ScaleFactor',10)
+      
+      figure
    end
    
 end
