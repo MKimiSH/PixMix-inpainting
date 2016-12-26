@@ -1,4 +1,4 @@
-function [pyI,F] = fillImagePyr_withmex(pyI, pyM, pynuM, usrLines)
+function [pyI,F] = fillImagePyr_withmex_old(pyI, pyM, useLineConstr)
 % pyI and pyM are cell vectors containing the image pyramid
 % In video inpainting, only the first frame (or the keyframe) needs to be
 % processed through this function, others can just be filled using
@@ -8,17 +8,16 @@ function [pyI,F] = fillImagePyr_withmex(pyI, pyM, pynuM, usrLines)
 t1 = tic;
 L = length(pyM);
 curF = [];
-numitertop = floor((linspace(50, 80, L)));
+numitertop = floor((linspace(200, 16, L)));
 params.alphaSp = 0.025;
-params.alphaAp = 0.25;
+params.alphaAp = 0.575;
 params.cs_imp = 1;
 params.cs_rad = 20;
 
 
 linesPyr = cell(L, 1);
-useLineConstr = usrLines;
-if useLineConstr~=-1
-    linesPyr = pyrLines(pyI, pyM, usrLines, L); % detect lines that are near to or cut the mask
+if useLineConstr>0
+    linesPyr = pyrLines(pyI, pyM, [], L); % detect lines that are near to or cut the mask
 end
 
 for l = 1:L
@@ -34,15 +33,15 @@ for l = 1:L
     D = single(bwdist(~pyM{l}));
     curF = int32(curF);
     numiter = int32(numitertop(l));
-    if(l>1)
-        numiter = 1; 
-    end
+    
+    curF = permute(curF, [3 1 2]); pyI{l} = im2uint8(permute(pyI{l}, [3 1 2]));
 %     [pyI{l}, curF] = mex_fillOneLevel( curF, pyI{l}, pyM{l}, D, l, useLineConstr, numiter );
-    [pyI{l}, curF] = mex_fillOneLevel_withline( curF, pyI{l}, pyM{l}, pynuM{l}, D, l, linesPyr{l}, numiter, params );
-%     if(mod(l,2)==1 && l<L)
-%         showF(pyI{l}, pyM{l}, curF);
-%     end
-%     showF(pyI{l}, pyM{l}, curF);
+    [retI, curF] = mex_fillOneLevel_withline( curF, pyI{l}, pyM{l}, [], D, l, linesPyr{l}, numiter, params );
+%     [pyI{l}, curF] = mex_fillOnelevel_wl_shortint( curF, pyI{l}, pyM{l}, [], D, l, linesPyr{l}, numiter, params );
+    curF = ipermute(curF, [3 1 2]); pyI{l} = im2single(ipermute(retI, [3 1 2]));
+%     curF = ipermute(reshape(curF, [2 size(pyM{l},1) size(pyM{l},2)]), [3 1 2]); 
+%     pyI{l} = ipermute(reshape(pyI{l}, [3 size(pyM{l},1) size(pyM{l},2)]), [3 1 2]);
+
     toc
     fprintf('level %d end\n', l);
 end

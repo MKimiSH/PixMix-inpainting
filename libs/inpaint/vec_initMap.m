@@ -38,7 +38,8 @@ l0 = length(row0);
 randfill = randi(l0, l1, 1);
 f_ind1 = row0(randfill);
 f_ind2 = col0(randfill);
-f(sub2ind(size(f), row1, col1, ones(l1,1))) = f_ind1;
-f(sub2ind(size(f), row1, col1, 2*ones(l1,1))) = f_ind2;
+fillind = sub2ind([R, C], row1, col1);
+f(fillind) = f_ind1;
+f(fillind+R*C) = f_ind2;
 toc
 end

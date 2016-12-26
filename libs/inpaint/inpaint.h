@@ -8,23 +8,25 @@
 #include <time.h>
 #include <vector>
 #include <conio.h>
+#include <stdint.h>
 
 #define MAX(a,b) ((a)<(b)?(b):(a))
 #define MIN(a,b) ((a)>(b)?(b):(a))
 //#define G(i,j,r,c) ((i)*(c)+(j))
 #define G(i,j,r,c) ((i)+(j)*(r))
 //#define H(i,j,k, r,c,d) ((i)*(c)*(d)+(j)*(d)+(k))
-//#define H(i,j,k, r,c,d) ((i)*(d)+(j)*(r*d)+(k))
-#define H(i,j,k, r,c,d) ((i)+(j)*(r)+(k)*(r)*(c))
+#define H(i,j,k, r,c,d) ((i)*(d)+(j)*(r*d)+(k))
+
+//#define H(i,j,k, r,c,d) ((i)+(j)*(r)+(k)*(r)*(c))
 //#define GG(i,j)		((i)*(C)+(j))
 #define GG(i,j)		((i)+(j)*(R))
 //#define HH(i,j,k,d)	((i)*(C)*(d)+(j)*(d)+(k))
-//#define HH(i,j,k,d)	((i)*(d)+(j)*(R)*(d)+(k))
-#define HH(i,j,k,d)		((i) + (j)*(R) + (k)*R*C)
+#define HH(i,j,k,d)	((i)*(d)+(j)*(R)*(d)+(k))
+//#define HH(i,j,k,d)		((i) + (j)*(R) + (k)*R*C)
 #define sind(x) (sin(fmod((x),360) * M_PI / 180))
 #define cosd(x) (cos(fmod((x),360) * M_PI / 180))
 #define sq(x) ((x)*(x))
-
+#define uint8 uint8_t
 
 
 class fij {
