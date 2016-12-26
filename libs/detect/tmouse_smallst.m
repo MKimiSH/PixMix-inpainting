@@ -43,11 +43,11 @@ switch(action)
    %this_frame = im2uint8(rgb2gray(readFrame(v)));
    %this_frame = this_frame(1:4:end,1:4:end);
    
-   %初始化vision.PointTracker
-   imagePoints1 = detectMinEigenFeatures(last_frame, 'MinQuality', 0.1);  
-   tracker = vision.PointTracker('MaxBidirectionalError', 1, 'NumPyramidLevels', 5);  
-   imagePoints1 = imagePoints1.Location;  
-   initialize(tracker, imagePoints1, last_frame);  
+%    %初始化vision.PointTracker
+%    imagePoints1 = detectMinEigenFeatures(last_frame, 'MinQuality', 0.1);  
+%    tracker = vision.PointTracker('MaxBidirectionalError', 1, 'NumPyramidLevels', 5);  
+%    imagePoints1 = imagePoints1.Location;  
+%    initialize(tracker, imagePoints1, last_frame);  
    
    
    i = 0;
@@ -63,23 +63,18 @@ switch(action)
       this_frame = im2uint8(rgb2gray(readFrame(v)));
       %this_frame = this_frame(1:4:end,1:4:end);
       
+%       %vision.PointTracker
+%       [imagePoints2, validIdx] = step(tracker, this_frame);  
+%       matchedPoints1 = imagePoints1(validIdx, :);
+%       matchedPoints2 = imagePoints2(validIdx, :);
+%       figure  
+%       showMatchedFeatures(last_frame, this_frame, matchedPoints1, matchedPoints2);  
       
-      %vision.PointTracker
-      [imagePoints2, validIdx] = step(tracker, this_frame);  
-      matchedPoints1 = imagePoints1(validIdx, :);  
-      matchedPoints2 = imagePoints2(validIdx, :);  
-      figure  
-      showMatchedFeatures(last_frame, this_frame, matchedPoints1, matchedPoints2);  
-      
-      
-      [H,this_boundary,opticalFlow,last_corner_list,estimated_corner_list,flow] = object_tracking(last_frame,this_frame,false,this_boundary,opticalFlow);
-      
-      this_corner_list = harris(this_frame);
+      [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flow] = object_tracking(last_frame,this_frame,false,this_boundary,opticalFlow);
       this_boundary_list = matrix2list(this_boundary,1);
       
-      display = insertMarker(this_frame, fliplr(last_corner_list), '+','color','yellow');
-      display = insertMarker(display, fliplr(estimated_corner_list), 'circle','color','yellow');
-      %display = insertMarker(display, fliplr(this_corner_list), '+','color','red');
+      display = insertMarker(this_frame, fliplr(this_corner_list), '+','color','yellow');
+      display = insertMarker(display, fliplr(estimated_corner_list), 'circle','color','red');
       display = insertMarker(display, fliplr(this_boundary_list), '+','color','green');
       imshow(display);
       hold on
