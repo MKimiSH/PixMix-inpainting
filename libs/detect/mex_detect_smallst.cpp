@@ -2,7 +2,7 @@
 #include <math.h>
 
 
-
+#define ABS(x) ((x)>=0 ? (x):(-(x)))
 bool pointInPolygon(double x,double y,double polyX[], double polyY[],int polySides) {
     int   j = polySides-1;
     bool  oddNodes = false;
@@ -24,7 +24,7 @@ int dis(double a[], double b[], double v[], int l)
 {
     int d = 0;
     for (int i = 0; i < 3; i++) {
-        if(abs(a[i] - b[i*l]) > v[i])
+        if(ABS(a[i] - b[i*l]) > v[i])
         {
             d = 1;
             break;

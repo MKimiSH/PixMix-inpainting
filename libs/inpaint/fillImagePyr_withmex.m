@@ -8,18 +8,15 @@ function [pyI,F] = fillImagePyr_withmex(pyI, pyM, pynuM, usrLines)
 t1 = tic;
 L = length(pyM);
 curF = [];
-numitertop = floor((linspace(50, 80, L)));
+numitertop = floor((linspace(200, 20, L)));
 params.alphaSp = 0.025;
 params.alphaAp = 0.25;
 params.cs_imp = 1;
 params.cs_rad = 20;
 
 
-linesPyr = cell(L, 1);
-useLineConstr = usrLines;
-if useLineConstr~=-1
-    linesPyr = pyrLines(pyI, pyM, usrLines, L); % detect lines that are near to or cut the mask
-end
+% linesPyr = cell(L, 1);
+linesPyr = pyrLines(pyI, pyM, usrLines, L); % detect lines that are near to or cut the mask
 
 for l = 1:L
     pyI{l} = maskImage(pyI{l}, pyM{l});
@@ -34,12 +31,12 @@ for l = 1:L
     D = single(bwdist(~pyM{l}));
     curF = int32(curF);
     numiter = int32(numitertop(l));
-    if(l>1)
-        numiter = 1; 
-    end
 %     [pyI{l}, curF] = mex_fillOneLevel( curF, pyI{l}, pyM{l}, D, l, useLineConstr, numiter );
-    [pyI{l}, curF] = mex_fillOneLevel_withline( curF, pyI{l}, pyM{l}, pynuM{l}, D, l, linesPyr{l}, numiter, params );
-%     if(mod(l,2)==1 && l<L)
+    curF = permute(curF, [3 1 2]); pyI{l} = im2uint8(permute(pyI{l}, [3 1 2]));
+    [retI, curF] = mex_fillOneLevel_withline( curF, pyI{l}, pyM{l}, pynuM{l}, D, l, linesPyr{l}, numiter, params );
+    curF = ipermute(curF, [3 1 2]); pyI{l} = im2single(ipermute(retI, [3 1 2]));
+
+    %     if(mod(l,2)==1 && l<L)
 %         showF(pyI{l}, pyM{l}, curF);
 %     end
 %     showF(pyI{l}, pyM{l}, curF);

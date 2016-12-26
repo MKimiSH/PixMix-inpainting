@@ -77,11 +77,35 @@ start = uicontrol('String', 'start', 'Enable', 'off',...
     end
     function mystart(hObject, eventdata)
         se = strel('disk',4);
-        fres = maxLianTongYu_smallst(imclose(detect_obj_smallst(this_frame, landmarks),se));   
+        fres = maxLianTongYu_smallst(imclose(detect_obj_smallst(startFrame, Landmarks),se));   
         this_boundary = edge(fres, 'sobel'); % first frame boundary
         [h,w] = size(fres);
         [x,y] = meshgrid(1:w, 1:h);
-        avoidArea = inpolygon(x,y, avoidMarks(:,1), avoidMarks(:,2)); % avoid area
-        Lines % line point (n x 4 matrix)
+        avoidArea = zeros(size(this_boundary), 'logical');
+        if ~isempty(avoidMarks)
+            avoidArea = inpolygon(x,y, avoidMarks(:,1), avoidMarks(:,2)); % avoid area
+        end
+%         Lines % line point (n x 4 matrix)
+        Lines = round(Lines);
+        usrlines = struct('point1', [-1 -1], 'point2', [0 0], 'theta', 0, 'rho', 0);
+        for i=1:length(Lines);
+            usrlines(i).point1 = Lines(i, 1:2);
+            usrlines(i).point2 = Lines(i, 3:4);
+            [usrlines(i).theta,  usrlines(i).rho] = calcThetaRho(Lines(i,:));
+        end
+        inpaintVideo(video, 'out.mp4', fres, avoidArea, usrlines, this_boundary);
     end
-end    
+end
+
+function [t, r] = calcThetaRho(p)
+x1 = p(1)-1;
+y1 = p(2)-1;
+x2 = p(3)-1;
+y2 = p(4)-1;
+
+eq1 = sprintf('r = %d*cos(t) + %d*sin(t)', x1, y1);
+eq2 = sprintf('r = %d*cos(t) + %d*sin(t)', x2, y2);
+[r, t] = solve(eq1, eq2, '-pi/2<=t<pi/2');
+r = eval(r); t = 180*eval(t)/pi;
+
+end

@@ -51,7 +51,7 @@ bool	*mask;
 bool	*numask;
 mxArray *linesptr;
 int		R = 0, C = 0;
-int		Rbeg, Cbeg, Rend, Cend, nnzMask;
+int		Rbeg, Cbeg, Rend, Cend, nnzMask, nnzNUMask;
 int		RSRounds = 3;
 float alphaSp = .005, alphaAp = 0.5, alphaStr = 1 - alphaSp - alphaAp;
 float cs_imp = 1, cs_rad = 1;
@@ -122,7 +122,7 @@ void getParams(const mxArray* pparams) {
 void getBegEnd() {
 	//Rbeg = Cbeg = 0; Rend = R - 1; Cend = C - 1; return;
 	Rbeg = Cbeg = MAX(R, C);
-	Rend = Cend = nnzMask = 0;
+	Rend = Cend = nnzMask = nnzNUMask = 0;
 	for (int j = 0; j < C; ++j) {
 		for (int i = 0; i < R; ++i) {
 			if (isMask(i, j)) {
@@ -132,9 +132,12 @@ void getBegEnd() {
 				if (Rend < i)Rend = i;
 				if (Cend < j)Cend = j;
 			}
+			if (isNUMask(i, j)) {
+				nnzNUMask++;
+			}
 		}
 	}
-	printf("(%d, %d)->(%d, %d), nnzMask = %d\n", Rbeg, Cbeg, Rend, Cend, nnzMask);
+	printf("(%d, %d)->(%d, %d), nnzMask = %d, nnzNUMask = %d\n", Rbeg, Cbeg, Rend, Cend, nnzMask, nnzNUMask);
 }
 
 // relative convergence criterion
@@ -516,6 +519,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	bool*	M = (bool*)mxGetData(INM);
 	//numask = (bool*)mxGetData(INNUM);
 	int t = mxGetNumberOfElements(INNUM);
+	printf("NUMASK has %d ele\n", t);
 	if (t == 0) 
 		numask = NULL;
 	else numask = (bool*)mxGetData(INNUM);
