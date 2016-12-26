@@ -10,21 +10,21 @@ startFrame = readFrame(v);
 imshow(startFrame);
 hold on;
 
-select = uicontrol('String', 'select', 'Callback', ...
-    {@tmouse, 'select'}, ...
-    'Position', [20 20 60 20]);
+select = uicontrol('String', 'select', ...
+    'Callback', {@tmouse, 'select'}, ...
+    'Position', [20 620 60 20]);
 
-avoid = uicontrol('String', 'avoid area', ...
+avoid = uicontrol('String', 'avoid', ...
     'Callback', {@tmouse, 'avoid'}, ... 
-    'Position', [100 20 100 20]);
+    'Position', [20 580 60 20]);
 
 lines = uicontrol('String', 'lines', ...
     'Callback', @drawLines, ...
-    'Position', [220 20 60 20]);
+    'Position', [20 540 60 20]);
 
 start = uicontrol('String', 'start', 'Enable', 'off',...
     'Callback', {@mystart},...  
-    'Position', [300 20 60 20]);
+    'Position', [20 500 60 20]);
 
     function tmouse(hObject, eventdata,action)
         if(strcmp(action, 'avoid') || strcmp(action, 'select'))
@@ -47,7 +47,12 @@ start = uicontrol('String', 'start', 'Enable', 'off',...
                 currPt = get(gca, 'CurrentPoint');
                 x = currPt(1,1);
                 y = currPt(1,2);
-                plot(x,y,'w.');
+                if(strcmp(hd.tAction, 'avoid'))
+                    plot(x,y,'r.');
+                else
+                    plot(x,y,'w.');                   
+                end
+
                 hd.marks = [hd.marks;floor(x), floor(y)];
                 guidata(gcbo, hd);
             case 'up'
