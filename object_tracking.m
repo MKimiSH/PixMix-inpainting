@@ -19,7 +19,13 @@ function [H,this_contour,opticalFlow] = object_tracking(last_frame,this_frame,is
     %估计投影变换需要至少4对corner,因此要求harris返回上一帧至少4个corner
     last_contour_list = matrix2list(last_contour,1);
     [last_contour_count,~] = size(last_contour_list);
-    last_corner_list = harris(last_frame,last_contour_list,4);
+    
+    se = [1,1,1,1;1,1,1,1;1,1,1,1;1,1,1,1];
+    candidate_matrix = imdilate(last_contour,se);
+    candidate_list = matrix2list(candidate_matrix,1);
+    
+    last_corner_list = harris(last_frame,candidate_list,4);
+    %last_corner_list = harris(last_frame,last_contour_list,4);
 
     matchedpoints_last = last_corner_list;%找到的上一帧的角点位置
     
