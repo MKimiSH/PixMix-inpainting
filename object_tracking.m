@@ -24,7 +24,7 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     
     last_boundary_list = matrix2list(last_boundary,1);
     [last_boundary_count,~] = size(last_boundary_list);
-%{    
+    
     
     %%
     
@@ -112,7 +112,7 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
         return
     end
 
-%}
+
     %% 使用vision.PointTracker找两帧之间的变换关系
     
     %初始化vision.PointTracker
