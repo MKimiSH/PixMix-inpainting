@@ -36,7 +36,7 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     
     %估计投影变换需要至少4对corner,因此要求harris返回上一帧至少4个corner
     this_corner_list = harris(uint8_this_frame,candidate_list,30); %只搜索candidate中是否有交点
-    %this_corner_list = harris(this_frame); %所有全局的角点
+    %this_corner_list = harris(uint8_this_frame); %所有全局的角点
     
     estimated_corner_list = this_corner_list;%找到的角点根据光流法对应出的这一帧的位置
     [count,~] = size(estimated_corner_list);

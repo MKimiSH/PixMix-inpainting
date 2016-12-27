@@ -24,7 +24,7 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
     
     last_boundary_list = matrix2list(last_boundary,1);
     [last_boundary_count,~] = size(last_boundary_list);
-%{    
+    
     
     %%
     
@@ -112,7 +112,7 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
         return
     end
 
-%}
+
     %% 使用vision.PointTracker找两帧之间的变换关系
     
     %初始化vision.PointTracker
@@ -190,17 +190,17 @@ function [H,this_boundary,opticalFlow,this_corner_list,estimated_corner_list,flo
         dy = (next_y - cur_y)/n;
         dx = (next_x - cur_x)/n;
         
-        tmp_y = round((0:n-1)*dy + cur_y);
-        tmp_x = round((0:n-1)*dx + cur_x);
-        x_list = [x_list; tmp_x'];
-        y_list = [y_list; tmp_y'];
-%         for j=0:n-1
-%             tmp_y = round(cur_y + j*dy);
-%             tmp_x = round(cur_x + j*dx);
-%                 
-%             x_list(end+1) = tmp_x;
-%             y_list(end+1) = tmp_y;
-%         end
+%         tmp_y = round((0:n-1)*dy + cur_y);
+%         tmp_x = round((0:n-1)*dx + cur_x);
+%         x_list = [x_list; tmp_x'];
+%         y_list = [y_list; tmp_y'];
+        for j=0:n-1
+            tmp_y = round(cur_y + j*dy);
+            tmp_x = round(cur_x + j*dx);
+                
+            x_list(end+1) = tmp_x;
+            y_list(end+1) = tmp_y;
+        end
             
     end
     
