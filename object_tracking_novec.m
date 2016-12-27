@@ -175,6 +175,7 @@ function [H,this_boundary, this_mask, opticalFlow,this_corner_list,estimated_cor
     end
     
     this_mask = maxLianTongYu_smallst(imclose(detect_obj_smallst(this_frame, [x_list',y_list']),se)); 
+    this_mask = imdilate(this_mask, se);
     this_boundary = edge(this_mask, 'sobel');
     
 %     [X,Y] = meshgrid(1:img_height,1:img_width);

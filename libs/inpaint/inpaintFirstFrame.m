@@ -13,6 +13,7 @@ end
 M = M>0;
 nouseM = nouseM>0;
 
+M = imdilate(M,strel('disk',5));
 %% construct pyramid of an image
 [pyI, pyM, pynuM] = constructPyr(I, M, nouseM); % the levels of the pyramid is computed rather than assigned.
 
@@ -23,5 +24,6 @@ nouseM = nouseM>0;
 I = pyI{length(pyI)};
 
 figure, imshow(I);
+imwrite(I, 'out1.jpg');
 
 end

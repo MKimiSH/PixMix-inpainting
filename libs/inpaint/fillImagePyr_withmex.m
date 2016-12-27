@@ -10,7 +10,7 @@ L = length(pyM);
 curF = [];
 numitertop = floor((linspace(200, 20, L)));
 params.alphaSp = 0.025;
-params.alphaAp = 0.35;
+params.alphaAp = 0.85;
 params.cs_imp = 1;
 params.cs_rad = 20;
 
