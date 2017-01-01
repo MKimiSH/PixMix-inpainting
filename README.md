@@ -15,7 +15,6 @@ mex libs\inpaint\mex_fillSecondImage.cpp
 mex libs\detect\mex_detect_smallst.cpp
 ```
 
-2. run demo.m->没写说个蛋。
 
 
 ### 12.27
