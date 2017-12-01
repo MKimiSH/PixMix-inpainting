@@ -15,6 +15,7 @@ mex libs\inpaint\mex_fillSecondImage.cpp
 mex libs\detect\mex_detect_smallst.cpp
 ```
 
+2. run `OurUI` or `OurUIImage`
 
 
 ### 12.27
