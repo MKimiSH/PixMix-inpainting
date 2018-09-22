@@ -23,3 +23,5 @@ I won't incorporate the parallel machanism in the paper, so the speed won't reac
 
 Now inpainting of 1st frame ~3s (1280x720 with ~30000 pixels missing) and next frames ~1s (little difference from 1st frame). Bottleneck is tracking, which has a lot to improve
 
+### TODO on 22.09.18
+I got forks! Thank you! But I really don't know whether it can run correctly now... Need to check.
