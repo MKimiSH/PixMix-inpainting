@@ -489,12 +489,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 
 	//FILLEDI = mxCreateNumericMatrix(R*C * 3, 1, mxSINGLE_CLASS, mxREAL);
-	const int dim3[3] = { 3, R, C };
+	const size_t dim3[3] = { 3, R, C };
 	//int* ddd = dim3;
 	FILLEDI = mxCreateNumericArray(3, dim3, mxUINT8_CLASS, mxREAL);
 	imdata*	filledI = (imdata*)mxGetPr(FILLEDI);
 
-	const int dim2[3] = { 2, R,C };
+	const size_t dim2[3] = { 2, R,C };
 	RETF = mxCreateNumericArray(3, dim2, mxINT32_CLASS, mxREAL);
 	int*	retf = (int*)mxGetPr(RETF);
 

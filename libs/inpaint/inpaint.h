@@ -7,7 +7,8 @@
 #include <algorithm>
 #include <time.h>
 #include <vector>
-#include <conio.h>
+#include <cstring>
+// #include <conio.h>
 #include <stdint.h>
 
 #define MAX(a,b) ((a)<(b)?(b):(a))
@@ -39,10 +40,11 @@ public:
 	~fij();
 	int norm2();
 	int& operator [](int);
-	friend fij operator +(fij&, fij&);
-	friend fij operator -(fij&, fij&);
-	friend int operator *(fij&, fij&);
-	friend fij operator *(fij&, int&);
+    const int& operator [](int) const;
+	friend fij operator +(const fij&, const fij&);
+	friend fij operator -(const fij&, const fij&);
+	friend int operator *(const fij&, const fij&);
+	friend fij operator *(const fij&, const int&);
 };
 
 
@@ -63,7 +65,15 @@ fij::~fij() {}
 int fij::norm2() {
 	return data[0] * data[0] + data[1] * data[1];
 }
-int& fij::operator [](int idx) {
+const int& fij::operator [](int idx) const{
+	if (idx > 1 || idx < 0) {
+		printf("index exceeds fij length.\n");
+		return data[0];
+	}
+	return data[idx];
+}
+
+int& fij::operator [](int idx){
 	if (idx > 1 || idx < 0) {
 		printf("index exceeds fij length.\n");
 		return data[0];
@@ -76,22 +86,22 @@ int& fij::operator [](int idx) {
 //	ret[1] = data[1] + b[1];
 //	return ret;
 //}
-fij operator +(fij& f1, fij& f2) {
+fij operator +(const fij& f1,const fij& f2) {
 	fij ret;
 	ret[0] = f1[0] + f2[0];
 	ret[1] = f1[1] + f2[1];
 	return ret;
 }
-fij operator -(fij& f1, fij& f2) {
+fij operator -(const fij& f1,const  fij& f2) {
 	fij ret;
 	ret[0] = f1[0] - f2[0];
 	ret[1] = f1[1] - f2[1];
 	return ret;
 }
-int operator *(fij& f1, fij& f2) {
+int operator *(const fij& f1, const fij& f2) {
 	return f1[0] * f2[0] + f1[1] * f2[1];
 }
-fij operator *(fij& f, int & a) {
+fij operator *(const fij& f, int & a) {
 	fij ret(f[0] * a, f[1] * a);
 	return ret;
 }
