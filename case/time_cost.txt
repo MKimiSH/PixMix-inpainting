@@ -1,0 +1,9 @@
+1280x720(~61000 missing px): 10s inpainting 1st frame, <3s inpainting next frames, 10s tracking.
+
+378x672(~1500 missing px): 0.6s inpainting 1st frame, 2s tracking, <0.5s inpainting next frames.
+
+1300x650(~21000 missing px): 4s inpainting.
+
+1600x1600(~200000 missing px): 30s inpainting.
+
+1600x900(~5500 missing px): 2s inpainting.
